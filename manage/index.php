@@ -40,47 +40,87 @@
 <body>
 <div class="container-fluid main">
 	<div class="row">
-		<div class="col-lg-6 col-xl-6 col-md-12 col-sm-12 col-xs-12">
-			<div class="row">
-				<h2 class="col-md-9 col-sm-12"><?php echo $artwork_name; ?></h2>
-				<div class="col-md-3 col-sm-12"><a type="button" class="btn-lg btn-secondary" href="../">一覧に戻る</a></div>
-			</div>
+		<div class="col-lg-6 col-xl-6 col-md-12 col-sm-12 col-xs-12 card">
+			<div class="card-body">
+				<div class="row">
+					<h2 class="col-md-9 col-sm-12"><?php echo $artwork_name; ?></h2>
+					<div class="col-md-3 col-sm-12"><a type="button" class="btn-lg btn-secondary" href="../">一覧に戻る</a></div>
+				</div>
 
-			<div class="row">
-				<div class="col-3">
-					<figure class="figure">
-						<figcaption class="figure-caption">全体像</figcaption>
-						<div class="outsideWrapper">
+				<div class="row">
+					<div class="col-sm-3 col-xs-12">
+						<figure class="figure d-none d-sm-block">
+							<figcaption class="figure-caption">全体像</figcaption>
 							<div class="insideWrapper">
-								<img src="<?php echo $artwork_img ?>" class="overedImage" style="max-width: 15vw; height: 15vw;">
+								<img src="<?php echo $artwork_img ?>" class="overedImage" style="max-width: 100%; height: auto;">
 								<canvas class="coveringCanvas" width="300" height="300" id="thumb_canvas"></canvas>
 							</div>
+						</figure>
+
+						<div class="d-flex justify-content-around form-row" id="year-list">
+							<template id="year-checkbox">
+								<div class="form-check form-control-lg col-sm-12 col-3" onchange="changeVisibleYear(event);">
+									<input class="form-check-input" type="checkbox" value="" id="" checked>
+									<label class="form-check-label" for=""></label>
+								</div>
+							</template>
 						</div>
-					</figure>
+					</div>
 
-					<ul class="list-group list-group-flush" id="year-list">
-						<template id="year-checkbox">
-							<div class="form-check form-control-lg" onchange="changeVisibleYear(event);">
-								<input class="form-check-input" type="checkbox" value="" id="" checked>
-								<label class="form-check-label" for=""></label>
-							</div>
-						</template>
-					</ul>
+					<div class="figure col-sm-9 col-xs-12">
+						<figcaption class="figure-caption">拡大図</figcaption>
+						<canvas id="artwork_canvas" width="1000" height="1000" style="background-color:gray; width:100%; height: auto;"></canvas>
+					</div>
 				</div>
 
-				<div class="figure col-9">
-					<figcaption class="figure-caption">拡大図</figcaption>
-					<canvas id="artwork_canvas" width="1000" height="1000" style="background-color:gray; width:100%; height: auto;"></canvas>
+				<br>
+				<div class="row">
+					<textarea class="form-control col-9" id="artwork_comment"><?php echo $artwork_comment ?></textarea>
+					<button class="btn btn-secondary col-3" onclick="updateComment()">コメントを更新</button>
+				</div>
+
+				<br>
+			</div>
+		</div>
+
+		<div class="col-lg-6 col-xl-6 col-md-12 col-sm-12 col-xs-12 card">
+			<div class="row card-body">
+				<div class="form-group row col-12">
+					<label for="damage-type" class="col-3 col-form-label">種類</label>
+					<div class="col-6">
+						<input type="text" class="form-control" id="damage-type" placeholder="種類">
+					</div>
+				</div>
+
+				<div class="form-group row col-12">
+					<label for="damage-type" class="col-3 col-form-label">コメント</label>
+					<div class="col-9">
+						<textarea type="text" class="form-control" id="damage-comment" placeholder="コメント"></textarea>
+					</div>
+				</div>
+
+				<div class="form-group row col-12">
+					<label for="damage-type" class="col-3 col-form-label">登録日</label>
+					<div class="col-9">
+						<input type="date" class="form-control" id="damage-date">
+					</div>
+				</div>
+
+				<div class="form-group row col-6">
+					<label for="color" class="col-6 col-form-label">色</label>
+					<div class="col-6">
+						<input type="color" class="form-control" id="damage-color" style="margin:0px; border:0px;">
+					</div>
+				</div>
+
+				<div class="form-group row col-6">
+					<label for="color" class="col-6 col-form-label">形状</label>
+					<div class="col-6">
+						<input type="color" class="form-control" id="damage-shape">
+					</div>
 				</div>
 			</div>
 
-			<br>
-			<div class="row">
-				<textarea class="form-control col-9" id="artwork_comment"><?php echo $artwork_comment ?></textarea>
-				<button class="btn btn-secondary col-3" onclick="updateComment()">コメントを更新</button>
-			</div>
-
-			<br>
 			<button class="btn btn-danger">この美術品を削除</button>
 		</div>
 	</div>
@@ -105,6 +145,8 @@
 	var tx = 0;
 	var ty = 0;
 
+	var finger_distance = 0;
+
 	img.onload = function(){drawImage(img_x, img_y, img_scale)};
 
 	function drawImage(x, y, scale) {
@@ -125,6 +167,7 @@
 		var thumb_scale_x = thumb_canvas.width / img.width;
 		var thumb_scale_y = thumb_canvas.height / img.height;
 
+		thumb_context.lineWidth = 5;
 		thumb_context.strokeStyle = 'yellow';
 		thumb_context.clearRect(0, 0, thumb_canvas.width, thumb_canvas.height);
 		thumb_context.strokeRect(left * thumb_scale_x, top * thumb_scale_y, (right - left) * thumb_scale_x, (bottom - top) * thumb_scale_y);
@@ -137,7 +180,6 @@
 			img_x += (event.x - mx) / (rect.right - rect.left) * 2;
 			img_y += (event.y - my) / (rect.top - rect.bottom) * 2;
 			drawImage(img_x, img_y, img_scale);
-
 		}
 
 		mx = event.x;
@@ -151,17 +193,20 @@
 		x = x * 2 - 1
 		y = y * 2 - 1
 
-		scale_change = 0.8;
+		var scale_change = 0.8;
 
-		if (event.wheelDeltaY > 0) {
-			img_scale *= scale_change;
-			img_x = (img_x - x) * scale_change + x;
-			img_y = (img_y - y) * scale_change + y;
-		} else {
-			img_scale /= scale_change;
-			img_x = (img_x - x) / scale_change + x;
-			img_y = (img_y - y) / scale_change + y;
+		if (event.wheelDeltaY < 0) {
+			scale_change = 1 / scale_change;
 		}
+
+		img_scale *= scale_change;
+		if (img_scale < 1) {
+			scale_change /= img_scale;
+			img_scale = 1;
+		}
+		img_x = (img_x - x) * scale_change + x;
+		img_y = (img_y - y) * scale_change + y;
+
 		drawImage(img_x, img_y, img_scale);
 
 		event.preventDefault();
@@ -182,6 +227,14 @@
 
 		tx = x;
 		ty = y;
+
+		if (event.touches.length >= 2) {
+			var rect = canvas.getBoundingClientRect();
+
+			finger_distance = Math.hypot(
+				(event.touches[0].clientX - event.touches[1].clientX) / (rect.right - rect.left) * 2,
+				(event.touches[0].clientY - event.touches[1].clientY) / (rect.top - rect.bottom) * 2);
+		}
 	}
 
 	function onTouchMove(event) {
@@ -197,12 +250,40 @@
 			y = event.clientY;
 		}
 
-		img_x += (x - tx) / canvas.width * 2;
-		img_y -= (y - ty) / canvas.height * 2;
+		var rect = canvas.getBoundingClientRect();
+
+		if (event.touches.length == 1) {
+			img_x += (x - tx) / (rect.right - rect.left) * 2;
+			img_y += (y - ty) / (rect.top - rect.bottom) * 2;
+		} else if (event.touches.length >= 2) {
+			var x1 = (event.touches[0].clientX - rect.left) / (rect.right - rect.left) * 2 - 1;
+			var y1 = (event.touches[0].clientY - rect.bottom) / (rect.top - rect.bottom) * 2 - 1;
+			var x2 = (event.touches[1].clientX - rect.left) / (rect.right - rect.left) * 2 - 1;
+			var y2 = (event.touches[1].clientY - rect.bottom) / (rect.top - rect.bottom) * 2 - 1;
+
+			var new_finger_distance = Math.hypot(x2 - x1, y2 - y1);
+
+			var midX = (x1 + x2) / 2;
+			var midY = (y1 + y2) / 2;
+
+			var scale_change = new_finger_distance / finger_distance;
+			img_scale *= scale_change;
+			if (img_scale < 1) {
+				scale_change /= img_scale;
+				img_scale = 1;
+			}
+			img_x = (img_x - midX) * scale_change + midX;
+			img_y = (img_y - midY) * scale_change + midY;
+
+			finger_distance = new_finger_distance;
+		}
+
 		drawImage(img_x, img_y, img_scale);
 
 		tx = x;
 		ty = y;
+
+		event.preventDefault();
 	}
 
 	function updateComment() {
@@ -221,7 +302,7 @@
 	}
 
 	$(document).ready(function() {
-		thisURL = './?id=' + <?php echo $id; ?>;
+		var thisURL = './?id=' + <?php echo $id; ?>;
 
 		var data = <?php echo $damage_years; ?>;
 		var template = document.getElementById('year-checkbox');
@@ -229,9 +310,9 @@
 		for (var i = 0; i < data.length; i++) {
 			var clone = template.content.cloneNode(true);
 
+			clone.querySelector('.form-check-label').textContent = data[i];
 			clone.querySelector('.form-check-input').id = 'visible-' + data[i];
 			clone.querySelector('.form-check-label').htmlFor = 'visible-' + data[i];
-			clone.querySelector('.form-check-label').textContent = data[i];
 
 			document.getElementById('year-list').appendChild(clone);
 		}
@@ -240,6 +321,13 @@
 		canvas.addEventListener('mousewheel', onMouseWheel, false);
 		canvas.addEventListener('touchstart', onTouchStart, false);
 		canvas.addEventListener('touchmove', onTouchMove, false);
+
+		var today = new Date();
+		today.setDate(today.getDate());
+		var yyyy = today.getFullYear();
+		var mm = ("0"+(today.getMonth()+1)).slice(-2);
+		var dd = ("0"+today.getDate()).slice(-2);
+		document.getElementById("damage-date").value=yyyy+'-'+mm+'-'+dd;
 	});
 </script>
 </body>

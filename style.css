@@ -1,0 +1,22 @@
+.header {
+	text-align: center;
+	line-height: 200%;
+	margin: auto;
+	padding-top: 50px;
+}
+
+.main {
+	text-align: center;
+	line-height: 100%;
+	margin: auto;
+	padding-top: 20px;
+}
+
+span {
+	display: inline-block;
+}
+
+a:link {
+	text-decoration: none;
+}
+

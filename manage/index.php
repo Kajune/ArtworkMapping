@@ -57,7 +57,7 @@
 			<div class="card-body">
 				<div class="row">
 					<h2 class="col-md-9 col-sm-12"><?php echo $artwork_name; ?></h2>
-					<div class="col-md-3 col-sm-12"><a type="button" class="btn-lg btn-secondary" href="../">一覧に戻る</a></div>
+					<div class="col-md-3 col-sm-12"><a type="button" class="btn-lg btn-secondary" href="../" style="display: inline-block;">一覧に戻る</a></div>
 				</div>
 
 				<div class="row">
@@ -83,7 +83,7 @@
 					<div class="figure col-sm-9 col-xs-12" style="padding: 0px; margin: 0px;">
 						<figcaption class="figure-caption">拡大図</figcaption>
 						<canvas id="artwork_canvas" width="1000" height="1000" style="background-color:gray; width:100%; height: auto;"></canvas>
-						<small>損傷を選択するには、損傷を中央の枠内に収める</small>
+						<small>損傷を選択するには、損傷を中央の円内に収める</small>
 					</div>
 				</div>
 
@@ -271,7 +271,6 @@
 	</div>
 </div>
 
-<script type="text/javascript" src="manage.js"></script>
 <script type="text/javascript">
 
 	var img = new Image();
@@ -286,6 +285,8 @@
 	var img_y = 0;
 	var img_scale = 1;
 
+	var clicked = false;
+
 	var mx = 0;
 	var my = 0;
 
@@ -294,9 +295,225 @@
 
 	var finger_distance = 0;
 
-	var shape_imgs = []
+	var shape_imgs = [];
 
-	img.onload = function(){ drawImage(img_x, img_y, img_scale); };
+	const radius = 30;
+
+	function drawImage(x, y, scale) {
+		context.clearRect(0, 0, canvas.width, canvas.height);
+
+		var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * scale;
+		context.scale(real_scale, real_scale);
+		context.translate((canvas.width / real_scale - img.width) / 2, (canvas.height / real_scale - img.height) / 2);
+		context.translate(x * 0.5 * canvas.width / real_scale, -y * 0.5 * canvas.height / real_scale);
+		context.drawImage(img, 0, 0);
+		context.resetTransform();
+
+		context.lineWidth = 5;
+		context.strokeStyle = 'yellow';
+		context.beginPath();
+		context.moveTo(0, canvas.height / 2);
+		context.lineTo(canvas.width / 2 - radius, canvas.height / 2);
+
+		context.moveTo(canvas.width, canvas.height / 2);
+		context.lineTo(canvas.width / 2 + radius, canvas.height / 2);
+
+		context.moveTo(canvas.width / 2, 0);
+		context.lineTo(canvas.width / 2, canvas.height / 2 - radius);
+
+		context.moveTo(canvas.width / 2, canvas.height);
+		context.lineTo(canvas.width / 2, canvas.height / 2 + radius);
+		context.stroke();
+
+		context.beginPath();
+		context.arc(canvas.width / 2, canvas.height / 2, radius, 0, 2 * Math.PI);
+		context.stroke();
+
+		var left = Math.min(img.width, Math.max(0, img.width / 2 - ((x + 1) / 2) * canvas.width / real_scale));
+		var right = Math.min(img.width, Math.max(0, img.width / 2 + ((1 - x) / 2) * canvas.width / real_scale));
+		var top = Math.min(img.height, Math.max(0, img.height / 2 - ((1 - y) / 2) * canvas.height / real_scale));
+		var bottom = Math.min(img.height, Math.max(0, img.height / 2 + ((1 + y) / 2) * canvas.height / real_scale));
+
+		var thumb_scale_x = thumb_canvas.width / img.width;
+		var thumb_scale_y = thumb_canvas.height / img.height;
+
+		thumb_context.lineWidth = 5;
+		thumb_context.strokeStyle = 'yellow';
+		thumb_context.clearRect(0, 0, thumb_canvas.width, thumb_canvas.height);
+		thumb_context.strokeRect(left * thumb_scale_x, top * thumb_scale_y, (right - left) * thumb_scale_x, (bottom - top) * thumb_scale_y);
+		thumb_context.resetTransform();
+	}
+
+	function onMouseDown(event) {
+		if (event.button === 0) {
+			clicked = true;
+		}
+	}
+
+	function onMouseUp(event) {
+		if (event.button === 0) {
+			clicked = false;
+		}
+	}
+
+	function onMouseLeave(event) {
+		clicked = false;
+	}
+
+	function onMouseMove(event) {
+		if (clicked) {
+			var rect = canvas.getBoundingClientRect();
+			img_x += (event.x - mx) / (rect.right - rect.left) * 2;
+			img_y += (event.y - my) / (rect.top - rect.bottom) * 2;
+			drawImage(img_x, img_y, img_scale);
+		}
+
+		mx = event.x;
+		my = event.y;
+	}
+
+	function onMouseWheel(event) {
+		var rect = canvas.getBoundingClientRect();
+		var x = (event.x - rect.left) / (rect.right - rect.left);
+		var y = (event.y - rect.bottom) / (rect.top - rect.bottom);
+		x = x * 2 - 1
+		y = y * 2 - 1
+
+		var delta = (typeof event.wheelDeltaY !== 'undefined') ? event.wheelDeltaY : event.deltaY;
+
+		var scale_change = 0.8;
+
+		if (delta < 0) {
+			scale_change = 1 / scale_change;
+		}
+
+		img_scale *= scale_change;
+		if (img_scale < 1) {
+			scale_change /= img_scale;
+			img_scale = 1;
+		}
+		img_x = (img_x - x) * scale_change + x;
+		img_y = (img_y - y) * scale_change + y;
+
+		drawImage(img_x, img_y, img_scale);
+
+		event.preventDefault();
+	}
+
+	function getFingerPos(event){
+		var x = 0, y = 0;
+		if (event.touches) {
+			x = event.touches[0].clientX;
+			y = event.touches[0].clientY;
+		} else if (event.originalEvent && event.originalEvent.changedTouches[0]) {
+			x = event.originalEvent.changedTouches[0].clientX;
+			y = event.originalEvent.changedTouches[0].clientY;
+		} else if (event.clientX && event.clientY) {
+			x = event.clientX;
+			y = event.clientY;
+		}
+		return {x: x, y: y}
+	}
+
+	function onTouchStart(event) {
+		var {x, y} = getFingerPos(event);
+		tx = x;
+		ty = y;
+
+		if (event.touches.length >= 2) {
+			var rect = canvas.getBoundingClientRect();
+
+			finger_distance = Math.hypot(
+				(event.touches[0].clientX - event.touches[1].clientX) / (rect.right - rect.left) * 2,
+				(event.touches[0].clientY - event.touches[1].clientY) / (rect.top - rect.bottom) * 2);
+		}
+	}
+
+	function onTouchMove(event) {
+		var {x, y} = getFingerPos(event);
+
+		var rect = canvas.getBoundingClientRect();
+
+		if (event.touches.length == 1) {
+			img_x += (x - tx) / (rect.right - rect.left) * 2;
+			img_y += (y - ty) / (rect.top - rect.bottom) * 2;
+		} else if (event.touches.length >= 2) {
+			var x1 = (event.touches[0].clientX - rect.left) / (rect.right - rect.left) * 2 - 1;
+			var y1 = (event.touches[0].clientY - rect.bottom) / (rect.top - rect.bottom) * 2 - 1;
+			var x2 = (event.touches[1].clientX - rect.left) / (rect.right - rect.left) * 2 - 1;
+			var y2 = (event.touches[1].clientY - rect.bottom) / (rect.top - rect.bottom) * 2 - 1;
+
+			var new_finger_distance = Math.hypot(x2 - x1, y2 - y1);
+
+			var midX = (x1 + x2) / 2;
+			var midY = (y1 + y2) / 2;
+
+			var scale_change = new_finger_distance / finger_distance;
+			img_scale *= scale_change;
+			if (img_scale < 1) {
+				scale_change /= img_scale;
+				img_scale = 1;
+			}
+			img_x = (img_x - midX) * scale_change + midX;
+			img_y = (img_y - midY) * scale_change + midY;
+
+			finger_distance = new_finger_distance;
+		}
+
+		drawImage(img_x, img_y, img_scale);
+
+		tx = x;
+		ty = y;
+
+		event.preventDefault();
+	}
+
+	function beginMoveDamage() {
+		$('#beginMoveDamageButton').hide();		
+		$('#endMoveDamageButtons').show();
+	}
+
+	function endMoveDamage() {
+		$('#endMoveDamageButtons').hide();
+		$('#beginMoveDamageButton').show();
+	}
+
+	function cancelMoveDamage() {
+		$('#endMoveDamageButtons').hide();
+		$('#beginMoveDamageButton').show();
+	}
+
+	function updateTag() {
+		var data = { 'id': id, 'newtag': $('#artwork_tag').val() };
+
+		$.ajax({
+			type: "POST",
+			url: './updateTag.php',
+			dataType: 'json',
+			data: data,
+		}).done(function (data, textStatus, xhr) { alert(data['id']); alert(data['tag']); });
+	}
+
+	function updateComment() {
+		var data = { 'id': id, 'newcomment': $('#artwork_comment').val() };
+
+		$.ajax({
+			type: "POST",
+			url: './updateComment.php',
+			dataType: 'json',
+			data: data,
+		}).done(function (data, textStatus, xhr) { alert(data['id']); alert(data['comment']); });
+	}
+
+	function changeVisibleYear(e) {
+		console.log(e.target.id + ':' + e.target.checked);
+	}
+
+	function changeShape(e){
+		console.log(e.target);
+	}
+
+	img.onload = function(){ drawImage(img_x, img_y, img_scale, radius); };
 
 	$(document).ready(function() {
 		var thisURL = './?id=' + <?php echo $id; ?>;
@@ -314,8 +531,12 @@
 			document.getElementById('year-list').appendChild(clone);
 		}
 
+		canvas.addEventListener('mousedown', onMouseDown, false);
+		canvas.addEventListener('mouseup', onMouseUp, false);
+		canvas.addEventListener('mouseleave', onMouseLeave, false);
 		canvas.addEventListener('mousemove', onMouseMove, false);
 		canvas.addEventListener('mousewheel', onMouseWheel, false);
+		canvas.addEventListener('wheel', onMouseWheel, false);
 		canvas.addEventListener('touchstart', onTouchStart, false);
 		canvas.addEventListener('touchmove', onTouchMove, false);
 

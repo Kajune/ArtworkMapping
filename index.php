@@ -3,11 +3,11 @@
 
 	$php_array = <<< JSON_DOC
 		[
-			{"src": "img/demaria11.jpg", "title": "デ・マリア木彫⑪", "comment": "デ・マリア木彫⑪の説明・コメント", "id": 0},
-			{"src": "img/demaria11.jpg", "title": "デ・マリア木彫⑪", "comment": "デ・マリア木彫⑪の説明・コメント", "id": 1},
-			{"src": "img/demaria11.jpg", "title": "デ・マリア木彫⑪", "comment": "デ・マリア木彫⑪の説明・コメント", "id": 2},
-			{"src": "img/monet_floor.jpg", "title": "モネ・ビアンコ", "comment": "モネ・ビアンコの説明・コメント", "id": 3},
-			{"src": "img/monet_floor.jpg", "title": "モネ・ビアンコ", "comment": "モネ・ビアンコの説明・コメント", "id": 4},
+			{"src": "img/artwork/demaria11.jpg", "title": "デ・マリア木彫⑪", "comment": "デ・マリア木彫⑪の説明・コメント", "id": 0, "tag": "指紋, クソ客, マヌケ", "last_update": "2020-06-20"},
+			{"src": "img/artwork/demaria11.jpg", "title": "デ・マリア木彫⑪", "comment": "デ・マリア木彫⑪の説明・コメント", "id": 1, "tag": "指紋, マヌケ", "last_update": "2020-06-21"},
+			{"src": "img/artwork/demaria11.jpg", "title": "デ・マリア木彫⑪", "comment": "デ・マリア木彫⑪の説明・コメント", "id": 2, "tag": "指紋, クソ客", "last_update": "2020-06-22"},
+			{"src": "img/artwork/monet_floor.jpg", "title": "モネ・ビアンコ", "comment": "モネ・ビアンコの説明・コメント", "id": 3, "tag": "にょんちゃん, かわいい", "last_update": "2020-06-23"},
+			{"src": "img/artwork/monet_floor.jpg", "title": "モネ・ビアンコ", "comment": "モネ・ビアンコの説明・コメント", "id": 4, "tag": "にょんちゃん, きれい", "last_update": "2020-06-24"},
 		]
 	JSON_DOC;
 ?>
@@ -42,36 +42,124 @@
 	<a type="button" class="btn-lg btn-primary" href="addArtwork">新しい美術品の登録</a>
 	<br><br>
 
+	<hr>
+		<div class="form-group">
+			<input type="text" class="form-control" id="tag" placeholder="タグ(コンマ区切り)" onchange="checkNewTag(event);">
+			<div id="tag-area"></div><small>クリックでタグを取り除く</small>
+		</div>
+	<hr>
+
 	<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4" id="artwork-cardlist">
-		<template id="card-template">
-			<div class="col mb-4">
-				<div class="card">
-					<img src="img/demaria11.jpg" class="card-img-top d-none d-sm-block artwork-thumbnail">
-					<div class="card-body">
-						<h5 class="card-title artwork-title">美術品名</h5>
-						<p class="card-text artwork-comment">説明・コメント</p>
-						<a href="" type="button" class="btn-block btn-primary artwork-button">管理</a>
-					</div>
+	</div>
+
+	<template id="card-template">
+		<div class="col mb-4">
+			<div class="card">
+				<img src="img/demaria11.jpg" class="card-img-top d-none d-sm-block artwork-thumbnail">
+				<div class="card-body">
+					<h5 class="card-title artwork-title">美術品名</h5>
+					<p class="card-text artwork-comment">説明・コメント</p>
+					<div class="badge-area justify-content-around"></div>
+					<a href="" type="button" class="btn-block btn-primary artwork-button">管理</a>
+					<p class="card-text"><small class="text-muted artwork-last-update"></small></p>
 				</div>
 			</div>
-		</template>
-	</div>
+		</div>
+	</template>
+
 </div>
 
 <script type="text/javascript">
-	var data = <?php echo $php_array; ?>;
-	var template = document.getElementById('card-template');
+	var tagList = [];
 
-	for (var i = 0; i < data.length; i++) {
-		var clone = template.content.cloneNode(true);
+	function checkNewTag(event) {
+		var tags = event.target.value.trim().replace(/\s+/g, "").split(',');
+		for (var i = 0; i < tags.length; i++) {
+			addTag(tags[i]);
+		}
 
-		clone.querySelector('.artwork-thumbnail').src = data[i].src;
-		clone.querySelector('.artwork-title').textContent = data[i].title;
-		clone.querySelector('.artwork-comment').textContent = data[i].comment;
-		clone.querySelector('.artwork-button').href = "./manage/?id=" + data[i].id;
-		
-		document.getElementById('artwork-cardlist').appendChild(clone);
+		event.target.value='';
 	}
+
+	function showTagList() {
+		$('#tag-area').children().remove();
+		for (var i = 0; i < tagList.length; i++) {
+			var tag = document.createElement("button");
+			tag.className = 'badge badge-pill badge-light';
+			tag.innerText = tagList[i];
+			tag.onclick = function(event) {
+				removeTag(event.target.innerText);
+			};
+			$('#tag-area').append(tag);
+		}
+	}
+
+	function addTag(tagName) {
+		tagName = tagName.replace(/\s+/g, "").trim();
+		if (tagList.indexOf(tagName) == -1) {
+			tagList.push(tagName);
+			showTagList();
+			updateItems();
+		}
+	}
+
+	function removeTag(tagName) {
+		var index = tagList.indexOf(tagName);
+		if (index >= 0) {
+			tagList.splice(index, 1);
+		}
+		showTagList();
+		updateItems();
+	}
+
+	function updateItems() {
+		var data = <?php echo $php_array; ?>;
+		var template = document.getElementById('card-template');
+
+		$('#artwork-cardlist').children().remove();
+
+		for (var i = 0; i < data.length; i++) {
+			var clone = template.content.cloneNode(true);
+
+			var tags = data[i].tag.trim().replace(/\s+/g, "").split(',');
+
+			if (tagList.length > 0) {
+				var isOK = false;
+				for (var j = 0; j < tags.length; j++) {
+					if (tagList.indexOf(tags[j]) >= 0) {
+						isOK = true;
+						break;
+					}
+				}
+
+				if (!isOK) {
+					continue;
+				}
+			}
+
+			for (var j = 0; j < tags.length; j++) {
+				var tag = document.createElement("button");
+				tag.className = 'badge badge-pill badge-light';
+				tag.innerText = tags[j];
+				tag.onclick = function(event) {
+					addTag(event.target.innerText);
+				};
+				clone.querySelector('.badge-area').appendChild(tag);
+			}
+
+			clone.querySelector('.artwork-thumbnail').src = data[i].src;
+			clone.querySelector('.artwork-title').textContent = data[i].title;
+			clone.querySelector('.artwork-comment').textContent = data[i].comment;
+			clone.querySelector('.artwork-button').href = "./manage/?id=" + data[i].id;
+			clone.querySelector('.artwork-last-update').textContent = "Last update: " + data[i].last_update;
+			
+			$('#artwork-cardlist').append(clone);
+		}
+	}
+
+	$(document).ready(function() {
+		updateItems();
+	});
 </script>
 </body>
 </html>

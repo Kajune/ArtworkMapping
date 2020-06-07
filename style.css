@@ -1,3 +1,12 @@
+/* このコメントアウトを外すとエヴァ風になる */
+/*body, .card, .btn, .btn-lg, button, .btn-sm {
+	font-family: 'Noto Serif JP', serif;
+	font-weight: bold;
+	background-color: black;
+	color: white;
+	border-color: red;
+}*/
+
 .header {
 	text-align: center;
 	line-height: 200%;

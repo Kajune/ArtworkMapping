@@ -49,25 +49,29 @@
 	}
 ?>
 
-	<form method="POST">
-		<div class="form-group row">
-			<div class="col-lg-4">
-				<label for="artwork-image">画像</label><br>
-				<img src="" id="thumbnail" style="max-width: 15vw; height: 15vw;">
-				<input type="file" name="artwork-image" accept="image/*" required onchange="imgChange(event)"><br>
-			</div>
+	<form method="POST" class="form-group row">
+		<div class="col-lg-4">
+			<label for="artwork-image">画像</label><br>
+			<img src="" id="thumbnail" style="max-width: 15vw; height: 15vw;">
+			<input type="file" name="artwork-image" accept="image/*" required onchange="imgChange(event)"><br>
+		</div>
 
-			<div class="col-lg-8">
-				<label for="artwork-title">美術品名</label>
-				<input type="text" class="form-control" name="artwork-title" placeholder="美術品名" required>
+		<div class="col-lg-8">
+			<label for="artwork-title">美術品名</label>
+			<input type="text" class="form-control" name="artwork-title" placeholder="美術品名" required>
+			<br>
 
-				<label for="artwork-comment">コメント</label>
-				<textarea type="text" class="form-control" name="artwork-comment" placeholder="コメント"></textarea>
-				<small>コメントは任意のタイミングで編集できます</small><br>
+			<label for="artwork-tag">タグ</label>
+			<input type="text" class="form-control" name="artwork-tag" placeholder="タグ(コンマ区切り)">
+			<br>
 
-				<button type="submit" class="btn-lg btn-primary">登録する</button>
-				<a type="button" class="btn-lg btn-secondary" href="../">一覧に戻る</a>
-			</div>
+			<label for="artwork-comment">コメント</label>
+			<textarea type="text" class="form-control" name="artwork-comment" placeholder="コメント"></textarea>
+			<small>タグ・コメントは任意のタイミングで編集できます</small><br>
+			<br>
+
+			<button type="submit" class="btn-lg btn-primary">登録する</button>
+			<a type="button" class="btn-lg btn-secondary" href="../">一覧に戻る</a>
 		</div>
 	</form>		
 </div>

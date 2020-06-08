@@ -168,7 +168,11 @@
 						<label for="referenceImageControl" class="col-form-label">参考画像</label>
 
 						<div class="d-flex btn-toolbar">
-							<button class="btn btn-sm btn-secondary col-md-12 col-sm-6" id="add-damage-image" onclick="updateTag()">参考画像を追加</button>
+							<button class="btn btn-sm btn-secondary col-md-12 col-sm-6" id="add-damage-image">
+								<label style="width:100%;">
+									<input type="file" style="display:none" onchange="addDamageImage(event);">参考画像を追加
+								</label>
+							</button>
 							<button class="btn btn-sm btn-warning col-md-12 col-sm-6" id="delete-damage-image" data-toggle="modal" data-target="#delete-damage-image-dialog">現在の画像を削除</button>
 						</div>
 					</div>
@@ -793,8 +797,19 @@
 		updateCanvas(img_x, img_y, img_scale);
 	}
 
-	function changeShape(e){
+	function changeShape(e) {
 		console.log(e.target);
+	}
+
+	function addDamageImage(e) {
+		if (e.target.files.length == 0) {
+			return;
+		}
+		var reader = new FileReader();
+		reader.onload = function (e) {
+			alert(e.target.result);
+		}
+		reader.readAsDataURL(e.target.files[0]);
 	}
 
 	$(document).ready(function() {

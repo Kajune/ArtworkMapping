@@ -35,30 +35,80 @@
 		</div>
 	</template>
 
+	<template id="alert-fail">
+		<div class="alert alert-danger alert-dismissible fade show" role="alert">
+			<div class="fail-msg"></div>
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+	</template>
+
 <script type="text/javascript">
 	function successAlert() {
 		var template = document.getElementById('alert-success');
 		var clone = template.content.cloneNode(true);
 		document.getElementById('container').appendChild(clone);
 	}
+
+	function failAlert(msg) {
+		var template = document.getElementById('alert-fail');
+		var clone = template.content.cloneNode(true);
+		clone.querySelector('.fail-msg').innerHTML = msg;
+		document.getElementById('container').appendChild(clone);
+	}
 </script>
 
 <?php
-	if($_SERVER['REQUEST_METHOD'] === 'POST'){
-		echo '<script type="text/javascript">successAlert()</script>';
+	$sql = mysqli_connect('localhost', 'artworkadmin', 'akagisankawaii', 'artwork');
+
+	if (mysqli_connect_errno()) {
+		echo mysqli_error($sql);
 	}
+
+	if ($result = mysqli_query($sql, "SELECT name from artwork where deleted is false")) {
+		$names = mysqli_fetch_row($result);
+		mysqli_free_result($result);
+	} else {
+		echo mysqli_error($sql);
+	}
+
+	if($_SERVER['REQUEST_METHOD'] === 'POST'){
+		$name = mysqli_real_escape_string($sql, $_POST['artwork-title']);
+		$tag = mysqli_real_escape_string($sql, $_POST['artwork-tag']);
+		$comment = mysqli_real_escape_string($sql, $_POST['artwork-comment']);
+
+		if(isset($_FILES) && isset($_FILES['artwork-image']) && is_uploaded_file($_FILES['artwork-image']['tmp_name'])){
+			$a = '../img/artwork/'.uniqid();
+			if (move_uploaded_file($_FILES['artwork-image']['tmp_name'], $a)) {
+				if (mysqli_query($sql, "INSERT INTO artwork (name, tag, comment, img, last_update) VALUES ('$name', '$tag', '$comment', '$a', CURDATE())")) {
+					echo '<script type="text/javascript">successAlert()</script>';
+				} else {
+					echo mysqli_error($sql);
+				}
+			} else {
+				echo '<script type="text/javascript">failAlert("ファイルのアップロードに失敗しました。")</script>';
+			}
+		} else {
+			echo '<script type="text/javascript">failAlert("ファイルのアップロードに失敗しました。")</script>';
+		}
+
+	}
+
+	mysqli_close($sql);
 ?>
 
-	<form method="POST" class="form-group row">
+	<form method="POST" class="form-group row" id="form" enctype="multipart/form-data">
 		<div class="col-lg-4">
 			<label for="artwork-image">画像</label><br>
 			<img src="" id="thumbnail" style="max-width: 15vw; height: 15vw;">
-			<input type="file" name="artwork-image" accept="image/*" required onchange="imgChange(event)"><br>
+			<input type="file" name="artwork-image" accept="image/*" id="artwork-image" required onchange="imgChange(event)"><br>
 		</div>
 
 		<div class="col-lg-8">
 			<label for="artwork-title">美術品名</label>
-			<input type="text" class="form-control" name="artwork-title" placeholder="美術品名" required>
+			<input type="text" class="form-control" name="artwork-title" placeholder="美術品名" id="artwork-title" required onchange="nameChange(event);">
+			<small style="color: red;" id="duplicate_error" hidden>既に存在している美術品名です。</small>
 			<br>
 
 			<label for="artwork-tag">タグ</label>
@@ -70,19 +120,31 @@
 			<small>タグ・コメントは任意のタイミングで編集できます</small><br>
 			<br>
 
-			<button type="submit" class="btn-lg btn-primary">登録する</button>
-			<a type="button" class="btn-lg btn-secondary" href="../">一覧に戻る</a>
+			<button type="submit" class="btn btn-lg btn-primary" id="submit">登録する</button>
+			<a type="button" class="btn btn-lg btn-secondary" href="../">一覧に戻る</a>
 		</div>
 	</form>		
 </div>
 
 <script type="text/javascript">
-	function imgChange(e){
+	var existing_names = <?php echo json_encode($names); ?>;
+
+	function imgChange(e) {
 		var reader = new FileReader();
 		reader.onload = function (e) {
 			document.getElementById("thumbnail").src = e.target.result;
 		}
 		reader.readAsDataURL(e.target.files[0]);
+	}
+
+	function nameChange(e) {
+		if (existing_names.indexOf(e.target.value) >= 0) {
+			$('#submit').attr('disabled', true);
+			$('#duplicate_error').attr('hidden', false);
+		} else {
+			$('#submit').attr('disabled', false);
+			$('#duplicate_error').attr('hidden', true);
+		}
 	}
 </script>
 

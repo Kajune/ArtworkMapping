@@ -15,7 +15,12 @@
 	$artwork_img = "../img/artwork/demaria11.jpg";
 
 	# idに紐づく損傷を取得する
-	$damage_years = json_encode([2015, 2016, 2018, 2020]);
+	$damage_list = json_encode([
+		['id' => 0, 'type' => '指紋', 'comment' => 'マヌケが付けた指紋', 'date' => '2015-06-20', 'color' => '#ff0000', 'shape.id' => 0, 'x' => 235, 'y' => 68],
+		['id' => 1, 'type' => 'カビ', 'comment' => 'カビですよろしくお願いします', 'date' => '2016-12-03', 'color' => '#00ff00', 'shape.id' => 1, 'x' => 463, 'y' => 1135],
+		['id' => 2, 'type' => '汚職', 'comment' => '政治家のお食事券', 'date' => '2016-12-31', 'color' => '#000000', 'shape.id' => 2, 'x' => 0, 'y' => 0],
+		['id' => 3, 'type' => '心の汚れ', 'comment' => '心が汚れている', 'date' => '2020-03-02', 'color' => '#0000ff', 'shape.id' => 3, 'x' => 730, 'y' => 87],
+	]);
 
 	# 図形のリスト
 	$shape_list = json_encode([
@@ -26,7 +31,8 @@
 		['id' => 4, 'name' => 'triangle', 'src' => '../img/shape/shapes_05.png'], 
 		['id' => 5, 'name' => 'diamond', 'src' => '../img/shape/shapes_06.png'], 
 		['id' => 6, 'name' => 'hexagon', 'src' => '../img/shape/shapes_07.png'], 
-		['id' => 7, 'name' => 'pentagon', 'src' => '../img/shape/shapes_08.png'], ]);
+		['id' => 7, 'name' => 'pentagon', 'src' => '../img/shape/shapes_08.png'], 
+	]);
 ?>
 
 <!DOCTYPE html>
@@ -133,7 +139,7 @@
 				<div class="form-group row col-12">
 					<label for="color" class="col-3 col-form-label">色・形状</label>
 					<div class="col-3">
-						<input type="color" class="form-control" id="damage-color" style="margin:0px; border:0px;">
+						<input type="color" class="form-control" id="damage-color" value="#ff0000" style="margin:0px; border:0px;">
 					</div>
 
 					<div class="btn-group btn-group-toggle col-md-6 col-sm-12 text-left" data-toggle="buttons" 
@@ -294,21 +300,28 @@
 	var ty = 0;
 
 	var finger_distance = 0;
+	const radius = 40;
+	const marker_size = 32;
 
-	var shape_imgs = [];
+	var damage_list = <?php echo $damage_list; ?>;
+	var year_list = [];
+	for (const damage of damage_list) {
+		damage['date'] = new Date(damage['date']);
+		var year = damage['date'].getFullYear();
+		if (year_list.indexOf(year) == -1) {
+			year_list.push(year);
+		}
+	}
 
-	const radius = 30;
+	var shape_list = <?php echo $shape_list; ?>;
+	var shape_imgs = {};
+	for (const shape of shape_list) {
+		var shape_img = new Image();
+		shape_img.src = shape['src'];
+		shape_imgs[shape['id']] = shape_img;
+	}
 
-	function drawImage(x, y, scale) {
-		context.clearRect(0, 0, canvas.width, canvas.height);
-
-		var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * scale;
-		context.scale(real_scale, real_scale);
-		context.translate((canvas.width / real_scale - img.width) / 2, (canvas.height / real_scale - img.height) / 2);
-		context.translate(x * 0.5 * canvas.width / real_scale, -y * 0.5 * canvas.height / real_scale);
-		context.drawImage(img, 0, 0);
-		context.resetTransform();
-
+	function drawReticle() {
 		context.lineWidth = 5;
 		context.strokeStyle = 'yellow';
 		context.beginPath();
@@ -328,7 +341,9 @@
 		context.beginPath();
 		context.arc(canvas.width / 2, canvas.height / 2, radius, 0, 2 * Math.PI);
 		context.stroke();
+	}
 
+	function drawSubImage(x, y, real_scale) {
 		var left = Math.min(img.width, Math.max(0, img.width / 2 - ((x + 1) / 2) * canvas.width / real_scale));
 		var right = Math.min(img.width, Math.max(0, img.width / 2 + ((1 - x) / 2) * canvas.width / real_scale));
 		var top = Math.min(img.height, Math.max(0, img.height / 2 - ((1 - y) / 2) * canvas.height / real_scale));
@@ -342,6 +357,45 @@
 		thumb_context.clearRect(0, 0, thumb_canvas.width, thumb_canvas.height);
 		thumb_context.strokeRect(left * thumb_scale_x, top * thumb_scale_y, (right - left) * thumb_scale_x, (bottom - top) * thumb_scale_y);
 		thumb_context.resetTransform();
+	}
+
+	function updateCanvas(x, y, scale) {
+		context.clearRect(0, 0, canvas.width, canvas.height);
+
+		var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * scale;
+		context.scale(real_scale, real_scale);
+		context.translate((canvas.width / real_scale - img.width) / 2, (canvas.height / real_scale - img.height) / 2);
+		context.translate(x * 0.5 * canvas.width / real_scale, -y * 0.5 * canvas.height / real_scale);
+		context.drawImage(img, 0, 0);
+
+		mem_canvas = document.createElement("canvas");
+		mem_canvas.width = marker_size;
+		mem_canvas.height = marker_size;
+		var mem_context = mem_canvas.getContext('2d');
+
+		var scaled_marker_size = marker_size / scale;
+		for (const damage of damage_list) {
+			mem_context.clearRect(0, 0, mem_canvas.width, mem_canvas.height);
+
+			var shape_img_tmp = shape_imgs[damage['shape.id']];
+			var x = damage['x'] - scaled_marker_size / 2;
+			var y = damage['y'] - scaled_marker_size / 2;
+			var w = scaled_marker_size;
+			var h = scaled_marker_size;
+
+			mem_context.drawImage(shape_img_tmp, 0, 0, shape_img_tmp.width, shape_img_tmp.height, 
+				0, 0, mem_canvas.width, mem_canvas.height);
+			mem_context.fillStyle = damage['color'];
+			mem_context.globalCompositeOperation = "source-atop";
+			mem_context.fillRect(0, 0, mem_canvas.width, mem_canvas.height);
+			mem_context.globalCompositeOperation = "source-over";
+
+			context.drawImage(mem_canvas, 0, 0, mem_canvas.width, mem_canvas.height, x, y, w, h);
+		}
+		context.resetTransform();
+
+		drawReticle();
+		drawSubImage(x, y, real_scale);		
 	}
 
 	function onMouseDown(event) {
@@ -365,7 +419,7 @@
 			var rect = canvas.getBoundingClientRect();
 			img_x += (event.x - mx) / (rect.right - rect.left) * 2;
 			img_y += (event.y - my) / (rect.top - rect.bottom) * 2;
-			drawImage(img_x, img_y, img_scale);
+			updateCanvas(img_x, img_y, img_scale);
 		}
 
 		mx = event.x;
@@ -392,10 +446,10 @@
 			scale_change /= img_scale;
 			img_scale = 1;
 		}
-		img_x = (img_x - x) * scale_change + x;
-		img_y = (img_y - y) * scale_change + y;
+		img_x *= scale_change;
+		img_y *= scale_change;
 
-		drawImage(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale);
 
 		event.preventDefault();
 	}
@@ -454,13 +508,13 @@
 				scale_change /= img_scale;
 				img_scale = 1;
 			}
-			img_x = (img_x - midX) * scale_change + midX;
-			img_y = (img_y - midY) * scale_change + midY;
+			img_x *= scale_change;
+			img_y *= scale_change;
 
 			finger_distance = new_finger_distance;
 		}
 
-		drawImage(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale);
 
 		tx = x;
 		ty = y;
@@ -513,20 +567,17 @@
 		console.log(e.target);
 	}
 
-	img.onload = function(){ drawImage(img_x, img_y, img_scale, radius); };
+	img.onload = function(){ updateCanvas(img_x, img_y, img_scale, radius); };
 
 	$(document).ready(function() {
-		var thisURL = './?id=' + <?php echo $id; ?>;
-
-		var data = <?php echo $damage_years; ?>;
 		var template = document.getElementById('year-checkbox');
 
-		for (var i = 0; i < data.length; i++) {
+		for (var i = 0; i < year_list.length; i++) {
 			var clone = template.content.cloneNode(true);
 
-			clone.querySelector('.form-check-label').textContent = data[i];
-			clone.querySelector('.form-check-input').id = 'visible-' + data[i];
-			clone.querySelector('.form-check-label').htmlFor = 'visible-' + data[i];
+			clone.querySelector('.form-check-label').textContent = year_list[i];
+			clone.querySelector('.form-check-input').id = 'visible-' + year_list[i];
+			clone.querySelector('.form-check-label').htmlFor = 'visible-' + year_list[i];
 
 			document.getElementById('year-list').appendChild(clone);
 		}
@@ -551,16 +602,11 @@
 
 		template = document.getElementById('shape-option');
 
-		var shape_list = <?php echo $shape_list; ?>;
 		for (var i = 0; i < shape_list.length; i++) {
-			var img = new Image();
-			img.src = shape_list[i].src;
-			shape_imgs.push(img);
-
 			var clone = template.content.cloneNode(true);
 
-			clone.querySelector('.shape-img').src = img.src;
-			clone.querySelector('input').name = shape_list[i].id;
+			clone.querySelector('.shape-img').src = shape_list[i]['src'];
+			clone.querySelector('input').name = shape_list[i]['id'];
 			if (i == 0) {
 				clone.querySelector('label').className += ' active';
 				clone.querySelector('input').checked = true;

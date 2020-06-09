@@ -66,33 +66,43 @@
 		echo mysqli_error($sql);
 	}
 
-	if ($result = mysqli_query($sql, "SELECT name from artwork where deleted is false")) {
-		$names = mysqli_fetch_row($result);
+	if ($result = mysqli_query($sql, "SELECT name from artwork where `deleted` = false")) {
+		$names = mysqli_fetch_all($result);
 		mysqli_free_result($result);
 	} else {
 		echo mysqli_error($sql);
 	}
 
 	if($_SERVER['REQUEST_METHOD'] === 'POST'){
-		$name = mysqli_real_escape_string($sql, $_POST['artwork-title']);
+		$name = mysqli_real_escape_string($sql, $_POST['artwork-name']);
 		$tag = mysqli_real_escape_string($sql, $_POST['artwork-tag']);
 		$comment = mysqli_real_escape_string($sql, $_POST['artwork-comment']);
 
-		if(isset($_FILES) && isset($_FILES['artwork-image']) && is_uploaded_file($_FILES['artwork-image']['tmp_name'])){
-			$a = '../img/artwork/'.uniqid();
-			if (move_uploaded_file($_FILES['artwork-image']['tmp_name'], $a)) {
-				if (mysqli_query($sql, "INSERT INTO artwork (name, tag, comment, img, last_update) VALUES ('$name', '$tag', '$comment', '$a', CURDATE())")) {
-					echo '<script type="text/javascript">successAlert()</script>';
+		$bad_flag = false;
+		foreach ($names as $ename) {
+			if (strcmp($name, $ename[0]) == 0) {
+				echo '<script type="text/javascript">failAlert("既に存在している美術品名です。")</script>';
+				$bad_flag = true;
+				break;
+			}
+		}
+
+		if (!$bad_flag) {
+			if(isset($_FILES) && isset($_FILES['artwork-image']) && is_uploaded_file($_FILES['artwork-image']['tmp_name'])){
+				$a = uniqid().'.jpg';
+				if (move_uploaded_file($_FILES['artwork-image']['tmp_name'], '../img/artwork/'.$a)) {
+					if (mysqli_query($sql, "INSERT INTO artwork (name, tag, comment, img, last_update) VALUES ('$name', '$tag', '$comment', '$a', CURDATE())")) {
+						echo '<script type="text/javascript">successAlert()</script>';
+					} else {
+						echo mysqli_error($sql);
+					}
 				} else {
-					echo mysqli_error($sql);
+					echo '<script type="text/javascript">failAlert("ファイルのアップロードに失敗しました。")</script>';
 				}
 			} else {
 				echo '<script type="text/javascript">failAlert("ファイルのアップロードに失敗しました。")</script>';
 			}
-		} else {
-			echo '<script type="text/javascript">failAlert("ファイルのアップロードに失敗しました。")</script>';
 		}
-
 	}
 
 	mysqli_close($sql);
@@ -106,8 +116,8 @@
 		</div>
 
 		<div class="col-lg-8">
-			<label for="artwork-title">美術品名</label>
-			<input type="text" class="form-control" name="artwork-title" placeholder="美術品名" id="artwork-title" required onchange="nameChange(event);">
+			<label for="artwork-name">美術品名</label>
+			<input type="text" class="form-control" name="artwork-name" placeholder="美術品名" id="artwork-name" required onchange="nameChange(event);">
 			<small style="color: red;" id="duplicate_error" hidden>既に存在している美術品名です。</small>
 			<br>
 
@@ -138,13 +148,15 @@
 	}
 
 	function nameChange(e) {
-		if (existing_names.indexOf(e.target.value) >= 0) {
-			$('#submit').attr('disabled', true);
-			$('#duplicate_error').attr('hidden', false);
-		} else {
-			$('#submit').attr('disabled', false);
-			$('#duplicate_error').attr('hidden', true);
+		for (const ename of existing_names) {
+			if (ename[0] === e.target.value.trim()) {
+				$('#submit').attr('disabled', true);
+				$('#duplicate_error').attr('hidden', false);
+				return;
+			}
 		}
+		$('#submit').attr('disabled', false);
+		$('#duplicate_error').attr('hidden', true);
 	}
 </script>
 

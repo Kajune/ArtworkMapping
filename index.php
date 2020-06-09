@@ -1,15 +1,27 @@
 <?php
 	session_start();
 
-	$php_array = <<< JSON_DOC
-		[
-			{"src": "img/artwork/demaria11.jpg", "title": "デ・マリア木彫⑪", "comment": "デ・マリア木彫⑪の説明・コメント", "id": 0, "tag": "指紋, クソ客, マヌケ", "last_update": "2020-06-20"},
-			{"src": "img/artwork/demaria11.jpg", "title": "デ・マリア木彫⑪", "comment": "デ・マリア木彫⑪の説明・コメント", "id": 1, "tag": "指紋, マヌケ", "last_update": "2020-06-21"},
-			{"src": "img/artwork/demaria11.jpg", "title": "デ・マリア木彫⑪", "comment": "デ・マリア木彫⑪の説明・コメント", "id": 2, "tag": "指紋, クソ客", "last_update": "2020-06-22"},
-			{"src": "img/artwork/monet_floor.jpg", "title": "モネ・ビアンコ", "comment": "モネ・ビアンコの説明・コメント", "id": 3, "tag": "にょんちゃん, かわいい", "last_update": "2020-06-23"},
-			{"src": "img/artwork/monet_floor.jpg", "title": "モネ・ビアンコ", "comment": "モネ・ビアンコの説明・コメント", "id": 4, "tag": "にょんちゃん, きれい", "last_update": "2020-06-24"},
-		]
-	JSON_DOC;
+	$sql = mysqli_connect('localhost', 'artworkadmin', 'akagisankawaii', 'artwork');
+
+	if (mysqli_connect_errno()) {
+		echo mysqli_error($sql);
+	}
+
+	$args = array("id", "name", "tag", "comment", "img", "last_update");
+	if ($result = mysqli_query($sql, "SELECT * from artwork where `deleted` = false")) {
+		$tmp_array = mysqli_fetch_all($result);
+		mysqli_free_result($result);
+	} else {
+		echo mysqli_error($sql);
+	}
+
+	$artwork_array = array();
+
+	foreach ($tmp_array as $id1 => $value) {
+		foreach ($args as $id2 => $arg) {
+			$artwork_array[$id1][$arg] = $value[$id2];
+		}
+	}
 ?>
 
 <!DOCTYPE html>
@@ -54,13 +66,13 @@
 
 	<template id="card-template">
 		<div class="col mb-4">
-			<div class="card">
-				<img src="img/demaria11.jpg" class="card-img-top d-none d-sm-block artwork-thumbnail">
+			<div class="card h-100">
+				<img src="" class="card-img-top d-none d-sm-block artwork-thumbnail">
 				<div class="card-body">
-					<h5 class="card-title artwork-title">美術品名</h5>
-					<p class="card-text artwork-comment">説明・コメント</p>
-					<div class="badge-area justify-content-around"></div>
+					<h5 class="card-title artwork-name">美術品名</h5>
 					<a href="" type="button" class="btn-block btn-primary artwork-button">管理</a>
+					<div class="badge-area justify-content-around"></div>
+					<p class="card-text artwork-comment">説明・コメント</p>
 					<p class="card-text"><small class="text-muted artwork-last-update"></small></p>
 				</div>
 			</div>
@@ -113,7 +125,7 @@
 	}
 
 	function updateItems() {
-		var data = <?php echo $php_array; ?>;
+		var data = <?php echo json_encode($artwork_array); ?>;
 		var template = document.getElementById('card-template');
 
 		$('#artwork-cardlist').children().remove();
@@ -147,8 +159,8 @@
 				clone.querySelector('.badge-area').appendChild(tag);
 			}
 
-			clone.querySelector('.artwork-thumbnail').src = data[i].src;
-			clone.querySelector('.artwork-title').textContent = data[i].title;
+			clone.querySelector('.artwork-thumbnail').src = 'img/artwork/' + data[i].img;
+			clone.querySelector('.artwork-name').textContent = data[i].name;
 			clone.querySelector('.artwork-comment').textContent = data[i].comment;
 			clone.querySelector('.artwork-button').href = "./manage/?id=" + data[i].id;
 			clone.querySelector('.artwork-last-update').textContent = "Last update: " + data[i].last_update;

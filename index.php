@@ -19,7 +19,7 @@
 
 	foreach ($tmp_array as $id1 => $value) {
 		foreach ($args as $id2 => $arg) {
-			$artwork_array[$id1][$arg] = $value[$id2];
+			$artwork_array[$id1][$arg] = htmlspecialchars_decode($value[$id2], ENT_QUOTES);
 		}
 	}
 ?>
@@ -136,10 +136,10 @@
 			var tags = data[i].tag.trim().replace(/\s+/g, "").split(',');
 
 			if (tagList.length > 0) {
-				var isOK = false;
-				for (var j = 0; j < tags.length; j++) {
-					if (tagList.indexOf(tags[j]) >= 0) {
-						isOK = true;
+				var isOK = true;
+				for (var j = 0; j < tagList.length; j++) {
+					if (tags.indexOf(tagList[j]) < 0) {
+						isOK = false;
 						break;
 					}
 				}

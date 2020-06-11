@@ -7,12 +7,24 @@
 	}
 
 	$id = $_GET['id'];
-	
-	# 実際にはここでidをキーにしてSQLを発行しデータを取得する
-	$artwork_name = "デ・マリア彫像⑪";
-	$artwork_comment = "デ・マリア彫像のコメント";
-	$artwork_tag = "指紋, バカ客, マヌケ";
-	$artwork_img = "../img/artwork/demaria11.jpg";
+
+	$sql = mysqli_connect('localhost', 'artworkadmin', 'akagisankawaii', 'artwork');
+
+	if (mysqli_connect_errno()) {
+		echo mysqli_error($sql);
+	}
+
+	$stmt = mysqli_prepare($sql, "SELECT name, comment, tag, img FROM artwork WHERE `deleted` = false AND `id` = ?");
+	mysqli_stmt_bind_param($stmt, "i", $id);
+	if (mysqli_stmt_execute($stmt) && 
+		mysqli_stmt_bind_result($stmt, $artwork_name, $artwork_comment, $artwork_tag, $artwork_img) && 
+		mysqli_stmt_fetch($stmt)) {
+		mysqli_stmt_close($stmt);
+	} else {
+		header('Location:../');
+	}
+
+	$artwork_img = "../img/artwork/".$artwork_img;
 
 	# 図形のリスト
 	$shape_list = json_encode([
@@ -406,7 +418,7 @@
 
 	var finger_distance = 0;
 	const radius = 40;
-	const marker_size = 32;
+	const marker_size = 20;
 
 	//
 	// マーカーの読み込み
@@ -542,7 +554,7 @@
 		mem_canvas.height = marker_size;
 		var mem_context = mem_canvas.getContext('2d');
 
-		var scaled_marker_size = marker_size / scale;
+		var scaled_marker_size = marker_size / real_scale;
 		for (const damage of damage_list) {
 			if (!damage['visible']) {
 				continue;

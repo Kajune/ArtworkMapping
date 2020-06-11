@@ -91,7 +91,13 @@
 			if(isset($_FILES) && isset($_FILES['artwork-image']) && is_uploaded_file($_FILES['artwork-image']['tmp_name'])){
 				$a = uniqid().'.jpg';
 				if (move_uploaded_file($_FILES['artwork-image']['tmp_name'], '../img/artwork/'.$a)) {
-					if (mysqli_query($sql, "INSERT INTO artwork (name, tag, comment, img, last_update) VALUES ('$name', '$tag', '$comment', '$a', CURDATE())")) {
+					$name = htmlspecialchars($name);
+					$tag = htmlspecialchars($tag);
+					$comment = htmlspecialchars($comment);
+
+					$stmt = mysqli_prepare($sql, "INSERT INTO artwork (name, tag, comment, img, last_update) VALUES (?,?,?,?, CURDATE())");
+					mysqli_stmt_bind_param($stmt, "ssss", $name, $tag, $comment, $a);
+					if (mysqli_stmt_execute($stmt)) {
 						echo '<script type="text/javascript">successAlert()</script>';
 					} else {
 						echo mysqli_error($sql);
@@ -111,7 +117,7 @@
 	<form method="POST" class="form-group row" id="form" enctype="multipart/form-data">
 		<div class="col-lg-4">
 			<label for="artwork-image">画像</label><br>
-			<img src="" id="thumbnail" style="max-width: 15vw; height: 15vw;">
+			<img src="" id="thumbnail" style="max-width: 15vw; height: auto;">
 			<input type="file" name="artwork-image" accept="image/*" id="artwork-image" required onchange="imgChange(event)"><br>
 		</div>
 

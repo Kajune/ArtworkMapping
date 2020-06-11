@@ -74,9 +74,9 @@
 	}
 
 	if($_SERVER['REQUEST_METHOD'] === 'POST'){
-		$name = mysqli_real_escape_string($sql, $_POST['artwork-name']);
-		$tag = mysqli_real_escape_string($sql, $_POST['artwork-tag']);
-		$comment = mysqli_real_escape_string($sql, $_POST['artwork-comment']);
+		$name = $_POST['artwork-name'];
+		$tag = $_POST['artwork-tag'];
+		$comment = $_POST['artwork-comment'];
 
 		$bad_flag = false;
 		foreach ($names as $ename) {

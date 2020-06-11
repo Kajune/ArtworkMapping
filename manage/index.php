@@ -220,12 +220,12 @@
 			<div class="row card-body">
 				<div class="form-group d-flex col-12">
 					<input type="text" class="form-control col-9" id="artwork_tag" placeholder="タグ(コンマ区切り)" value="<?php echo $artwork_tag; ?>">
-					<button class="btn btn-secondary col-3" onclick="updateTag()">タグを更新</button>
+					<button class="btn btn-secondary col-3" onclick="updateArtwork()">タグを更新</button>
 				</div>
 
 				<div class="form-group d-flex col-12">
 					<textarea class="form-control col-9" id="artwork_comment"><?php echo $artwork_comment; ?></textarea>
-					<button class="btn btn-secondary col-3" onclick="updateComment()">コメントを更新</button>
+					<button class="btn btn-secondary col-3" onclick="updateArtwork()">コメントを更新</button>
 				</div>
 
 				<div class="form-group d-flex col-12">
@@ -290,7 +290,7 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">いいえ</button>
-				<button type="button" class="btn btn-danger">はい</button>
+				<button type="button" class="btn btn-danger" onclick="updateArtwork(true);">はい</button>
 			</div>
 		</div>
 	</div>
@@ -417,8 +417,8 @@
 	var ty = 0;
 
 	var finger_distance = 0;
-	const radius = 40;
-	const marker_size = 20;
+	const radius = 50;
+	const marker_size = 30;
 
 	//
 	// マーカーの読み込み
@@ -778,26 +778,18 @@
 		$('#beginMoveDamageButton').show();
 	}
 
-	function updateTag() {
-		var data = { 'id': id, 'newtag': $('#artwork_tag').val() };
+	function updateArtwork(del=false) {
+		var data = { 'id': id, 
+			'artwork-tag': $('#artwork_tag').val(),
+			'artwork-comment': $('#artwork_comment').val(),
+			'artwork-deleted': del };
 
 		$.ajax({
 			type: "POST",
-			url: './updateTag.php',
+			url: './updateArtwork.php',
 			dataType: 'json',
 			data: data,
-		}).done(function (data, textStatus, xhr) { alert(data['id']); alert(data['tag']); });
-	}
-
-	function updateComment() {
-		var data = { 'id': id, 'newcomment': $('#artwork_comment').val() };
-
-		$.ajax({
-			type: "POST",
-			url: './updateComment.php',
-			dataType: 'json',
-			data: data,
-		}).done(function (data, textStatus, xhr) { alert(data['id']); alert(data['comment']); });
+		}).done(function (data, textStatus, xhr) { if (del) { location.href = "../"; } });;
 	}
 
 	function changeVisibleYear(e) {

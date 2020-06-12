@@ -8,7 +8,8 @@
 
 	$id = $_GET['id'];
 
-	$sql = mysqli_connect('localhost', 'artworkadmin', 'akagisankawaii', 'artwork');
+	require_once '../DSN.php';
+	$sql = mysqli_connect($dsn['host'], $dsn['user'], $dsn['pass'], 'artwork');
 
 	if (mysqli_connect_errno()) {
 		echo mysqli_error($sql);
@@ -27,20 +28,23 @@
 	$artwork_img = "../img/artwork/".$artwork_img;
 
 	# 図形のリスト
-	$shape_list = json_encode([
-		['id' => 0, 'name' => 'circle', 'src' => '../img/shape/shapes_01.png'], 
-		['id' => 1, 'name' => 'square', 'src' => '../img/shape/shapes_02.png'], 
-		['id' => 2, 'name' => 'cross', 'src' => '../img/shape/shapes_03.png'], 
-		['id' => 3, 'name' => 'heart', 'src' => '../img/shape/shapes_04.png'],
-		['id' => 4, 'name' => 'triangle', 'src' => '../img/shape/shapes_05.png'], 
-		['id' => 5, 'name' => 'diamond', 'src' => '../img/shape/shapes_06.png'], 
-		['id' => 6, 'name' => 'hexagon', 'src' => '../img/shape/shapes_07.png'], 
-		['id' => 7, 'name' => 'pentagon', 'src' => '../img/shape/shapes_08.png'], 
-	]);
+	$shape_list = [];
+	if ($result = mysqli_query($sql, "SELECT * from shape")) {
+		while ($row = $result->fetch_assoc()) {
+			$row['src'] = '../img/shape/'.$row['src'];
+			$shape_list[] = $row;
+		}
+		$tmp_array = mysqli_fetch_assoc($result);
+		mysqli_free_result($result);
+	} else {
+		echo mysqli_error($sql);
+	}
+
+	$shape_list = json_encode($shape_list);
 
 	# idに紐づく損傷を取得する
 	$damage_list = json_encode([
-		['id' => 0, 'type' => '指紋', 'comment' => 'マヌケが付けた指紋', 'date' => '2015-06-20', 'color' => '#ff0000', 'shape.id' => 0, 'x' => 235, 'y' => 68],
+		['id' => 0, 'type' => '指紋', 'comment' => 'マヌケが付けた指紋', 'date' => '2015-06-20', 'color' => '#ff0000', 'shape.id' => 4, 'x' => 235, 'y' => 68],
 		['id' => 1, 'type' => 'カビ', 'comment' => 'カビですよろしくお願いします', 'date' => '2016-12-03', 'color' => '#00ff00', 'shape.id' => 1, 'x' => 463, 'y' => 1135],
 		['id' => 2, 'type' => '汚職', 'comment' => '政治家のお食事券', 'date' => '2016-12-31', 'color' => '#000000', 'shape.id' => 2, 'x' => 0, 'y' => 0],
 		['id' => 3, 'type' => '心の汚れ', 'comment' => '心が汚れている', 'date' => '2020-03-02', 'color' => '#0000ff', 'shape.id' => 3, 'x' => 730, 'y' => 87],
@@ -169,7 +173,7 @@
 						<template id="shape-option">
 							<button class="btn btn-outline-secondary shape-button" onchange="changeShape(event);" disabled>
 								<input type="radio" autocomplete="off" class="shape-button">
-								<img class="shape-img" src="" style="width:auto; height:3vh;">
+								<img class="shape-img" src="" style="width:auto; height:2.5vh;">
 							</button>
 						</template>
 					</div>
@@ -552,7 +556,7 @@
 		mem_canvas = document.createElement("canvas");
 		mem_canvas.width = marker_size;
 		mem_canvas.height = marker_size;
-		var mem_context = mem_canvas.getContext('2d');
+		var mem_context = mem_canvas.getContext('2d');		
 
 		var scaled_marker_size = marker_size / real_scale;
 		for (const damage of damage_list) {

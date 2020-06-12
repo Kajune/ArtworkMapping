@@ -1,7 +1,8 @@
 <?php
 	session_start();
 
-	$sql = mysqli_connect('localhost', 'artworkadmin', 'akagisankawaii', 'artwork');
+	require_once 'DSN.php';
+	$sql = mysqli_connect($dsn['host'], $dsn['user'], $dsn['pass'], 'artwork');
 
 	if (mysqli_connect_errno()) {
 		echo mysqli_error($sql);
@@ -97,7 +98,7 @@
 		$('#tag-area').children().remove();
 		for (var i = 0; i < tagList.length; i++) {
 			var tag = document.createElement("button");
-			tag.className = 'badge badge-pill badge-light';
+			tag.className = 'badge badge-pill badge-light text-wrap';
 			tag.innerText = tagList[i];
 			tag.onclick = function(event) {
 				removeTag(event.target.innerText);
@@ -151,7 +152,7 @@
 
 			for (var j = 0; j < tags.length; j++) {
 				var tag = document.createElement("button");
-				tag.className = 'badge badge-pill badge-light';
+				tag.className = 'badge badge-pill badge-light text-wrap';
 				tag.innerText = tags[j];
 				tag.onclick = function(event) {
 					addTag(event.target.innerText);

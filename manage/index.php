@@ -44,10 +44,10 @@
 
 	# idに紐づく損傷を取得する
 	$damage_list = json_encode([
-		['id' => 0, 'type' => '指紋', 'comment' => 'マヌケが付けた指紋', 'date' => '2015-06-20', 'color' => '#ff0000', 'shape.id' => 4, 'x' => 235, 'y' => 68],
-		['id' => 1, 'type' => 'カビ', 'comment' => 'カビですよろしくお願いします', 'date' => '2016-12-03', 'color' => '#00ff00', 'shape.id' => 1, 'x' => 463, 'y' => 1135],
-		['id' => 2, 'type' => '汚職', 'comment' => '政治家のお食事券', 'date' => '2016-12-31', 'color' => '#000000', 'shape.id' => 2, 'x' => 0, 'y' => 0],
-		['id' => 3, 'type' => '心の汚れ', 'comment' => '心が汚れている', 'date' => '2020-03-02', 'color' => '#0000ff', 'shape.id' => 3, 'x' => 730, 'y' => 87],
+		['id' => 0, 'type' => '指紋', 'comment' => 'マヌケが付けた指紋', 'date' => '2015-06-20', 'color' => '#ff0000', 'shape_id' => 4, 'x' => 235, 'y' => 68],
+		['id' => 1, 'type' => 'カビ', 'comment' => 'カビですよろしくお願いします', 'date' => '2016-12-03', 'color' => '#00ff00', 'shape_id' => 1, 'x' => 463, 'y' => 1135],
+		['id' => 2, 'type' => '汚職', 'comment' => '政治家のお食事券', 'date' => '2016-12-31', 'color' => '#000000', 'shape_id' => 2, 'x' => 0, 'y' => 0],
+		['id' => 3, 'type' => '心の汚れ', 'comment' => '心が汚れている', 'date' => '2018-03-02', 'color' => '#0000ff', 'shape_id' => 3, 'x' => 730, 'y' => 87],
 	]);
 
 	# idに紐づく損傷に紐づく画像
@@ -123,7 +123,7 @@
 		<div class="col-lg-6 col-xl-6 col-md-12 col-sm-12 col-xs-12 card">
 			<div class="row card-body justify-content-around">
 				<div class="form-group d-flex btn-toolbar row justify-content-around col-12">
-					<button class="btn btn-secondary col-md-3 col-sm-6" id="create-new-damage" onclick="updateTag()">
+					<button class="btn btn-secondary col-md-3 col-sm-6" id="create-new-damage" onclick="createDamage()">
 						<span>現在位置に</span><span>新しい</span><span>損傷を</span><span>登録</span></button>
 
 <!--					<button class="btn btn-secondary col-md-3 col-sm-6" data-toggle="modal" id="edit-damage" data-target="#edit-damage-dialog">
@@ -462,6 +462,12 @@
 		return yyyy+'-'+mm+'-'+dd;
 	}
 
+	var defaultDmageValue = {
+		'type' : '',
+		'color': $('#damage-color').val(),
+		'shape_id' : shape_list[0]['id'],
+	};
+
 	function enableEditing(enable) {
 //		$('#create-new-damage').prop("disabled", enable);
 		$('#beginMoveDamageButton').prop("disabled", !enable);
@@ -495,7 +501,7 @@
 			shape_button.prop('checked', false);
 			shape_button.parent().removeClass('active');				
 	
-			shape_button = $('input.shape-button[name="' + selected_damage['shape.id'] + '"]');
+			shape_button = $('input.shape-button[name="' + selected_damage['shape_id'] + '"]');
 			shape_button.prop('checked', true);
 			shape_button.parent().addClass('active');
 
@@ -565,7 +571,7 @@
 			}
 			mem_context.clearRect(0, 0, mem_canvas.width, mem_canvas.height);
 
-			var shape_img_tmp = shape_imgs[damage['shape.id']];
+			var shape_img_tmp = shape_imgs[damage['shape_id']];
 			var x = damage['x'] - scaled_marker_size / 2;
 			var y = damage['y'] - scaled_marker_size / 2;
 			var w = scaled_marker_size;
@@ -793,7 +799,42 @@
 			url: './updateArtwork.php',
 			dataType: 'json',
 			data: data,
-		}).done(function (data, textStatus, xhr) { if (del) { location.href = "../"; } });;
+		}).done(function (data, textStatus, xhr) { if (del) { location.href = "../"; } });
+	}
+
+	function createDamage() {
+		var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * img_scale;
+		var centerX = -img_x * canvas.width / real_scale / 2 + img.width / 2;
+		var centerY = img_y * canvas.height / real_scale / 2 + img.height / 2;
+
+		var data = { 'artwork_id': id,
+			'type' : defaultDmageValue['type'],
+			'color' : defaultDmageValue['color'],
+			'shape_id' : defaultDmageValue['shape_id'],
+			'x' : centerX, 
+			'y' : centerY, };
+
+		$.ajax({
+			type: "POST",
+			url: './createDamage.php',
+			dataType: 'json',
+			data: data,
+		}).done(function (data, textStatus, xhr) {
+			var damage = data['result'];
+			damage['date'] = new Date(damage['date']);
+			var year = damage['date'].getFullYear();
+			var index = year_list.indexOf(year);
+			if (index == -1) {
+				year_list.push(year);
+				addNewYear(year);
+				damage['visible'] = true;
+			} else {
+				damage['visible'] = $('#visible-' + year).prop('checked');
+			}
+
+			damage_list.push(damage);
+			updateCanvas(img_x, img_y, img_scale);
+		});
 	}
 
 	function changeVisibleYear(e) {
@@ -806,7 +847,7 @@
 	}
 
 	function changeShape(e) {
-		console.log(e.target);
+		defaultDmageValue['shape_id'] = e.target.name;
 	}
 
 	function addDamageImage(e) {
@@ -820,18 +861,24 @@
 		reader.readAsDataURL(e.target.files[0]);
 	}
 
+	function addNewYear(id) {
+		var clone = $('#year-checkbox').contents().clone(true);
+
+		clone.find('.form-check-input').attr('id', 'visible-' + id);
+		clone.find('.form-check-input').attr('name', id);
+		clone.find('.form-check-label').attr('htmlFor', 'visible-' + id);
+		clone.find('.form-check-label').text(id);
+
+		$('#year-list').append(clone);
+	}
+
+	function removeYear(year) {
+		$('#year-list').children().find('[name=' + year + ']').parent().remove();
+	}
+
 	$(document).ready(function() {
-		var template = document.getElementById('year-checkbox');
-
 		for (var i = 0; i < year_list.length; i++) {
-			var clone = template.content.cloneNode(true);
-
-			clone.querySelector('.form-check-input').id = 'visible-' + year_list[i];
-			clone.querySelector('.form-check-input').name = year_list[i];
-			clone.querySelector('.form-check-label').htmlFor = 'visible-' + year_list[i];
-			clone.querySelector('.form-check-label').textContent = year_list[i];
-
-			document.getElementById('year-list').appendChild(clone);
+			addNewYear(year_list[i]);	
 		}
 
 		canvas.addEventListener('mousedown', onMouseDown, false);

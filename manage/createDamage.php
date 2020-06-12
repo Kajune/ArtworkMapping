@@ -13,14 +13,12 @@
 		echo mysqli_error($sql);
 	}
 
-	$id = $_POST['id'];
-	$tag = $_POST['artwork-tag'];
-	$comment = $_POST['artwork-comment'];
-	$deleted = mysqli_real_escape_string($sql, $_POST['artwork-deleted']);
-
-	$stmt = mysqli_prepare($sql, "UPDATE artwork SET tag = ?, comment = ?, deleted = $deleted, last_update = CURDATE() WHERE `id` = ?");
-	mysqli_stmt_bind_param($stmt, "ssi", $tag, $comment, $id);
+	$stmt = mysqli_prepare($sql, "INSERT INTO damage(artwork_id, type, comment, date, color, shape_id, x, y) VALUES (?, ?, '', CURDATE(), ?, ?, ?, ?)");
+	mysqli_stmt_bind_param($stmt, "issidd", $_POST['artwork_id'], $_POST['type'], $_POST['color'], $_POST['shape_id'], $_POST['x'], $_POST['y']);
 	mysqli_stmt_execute($stmt);
 
-	echo json_encode(['error' => mysqli_error($sql)]);
+	$last_id = mysqli_insert_id($sql);
+	$result = mysqli_query($sql, "SELECT * from damage where `id` = $last_id");
+
+	echo json_encode(['error' => mysqli_error($sql), 'result' => mysqli_fetch_assoc($result)]);
 ?>

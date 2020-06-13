@@ -199,9 +199,13 @@
 							<button class="btn btn-sm btn-secondary col-md-12 col-sm-6" id="add-damage-image">
 								<label style="width:100%;">
 									<input type="file" id="damage-image-uploader" style="display:none" onchange="addDamageImage(event);">参考画像を追加
+									<div class="progress">
+										<div class="progress-bar" role="progressbar" id="damageImageUploadProgress" style="width: 0%" aria-valuenow="0" 
+											aria-valuemin="0" aria-valuemax="100"></div>
+									</div>
 								</label>
 							</button>
-							<button class="btn btn-sm btn-warning col-md-12 col-sm-6" id="delete-damage-image" data-toggle="modal" data-target="#delete-damage-image-dialog">現在の画像を削除</button>
+							<button class="btn btn-sm btn-warning col-md-12 col-sm-6" id="delete-damage-image" data-toggle="modal" data-target="#delete-damage-image-dialog" disabled>現在の画像を削除</button>
 						</div>
 					</div>
 
@@ -540,6 +544,10 @@
 					first = false;
 				}
 				$('#damage-image-list').append(clone);
+			}
+
+			if (first) {
+				$('#delete-damage-image').prop("disabled", true);
 			}
 		}
 	}
@@ -982,8 +990,6 @@
 		formData.append('file', e.target.files[0]);
 		formData.append('damage_id', selected_damage['id']);
 
-		$('#damage-image-uploader').val('');
-
 		$.ajax({
 			type: "POST",
 			url: './addDamageImage.php',
@@ -992,9 +998,25 @@
 			cache: false,
 			dataType: 'json',
 			data: formData,
+			enctype: 'multipart/form-data',
+			async: true,
+			xhr : function(){
+				var XHR = $.ajaxSettings.xhr();
+				$('#damageImageUploadProgress').parent().show();
+				if(XHR.upload){
+					XHR.upload.addEventListener('progress',function(e){
+						var progress = parseInt(e.loaded / e.total * 100);
+						$('#damageImageUploadProgress').prop('aria-valuenow', progress);
+						$('#damageImageUploadProgress').css('width', progress + '%');
+					}, false);
+				}
+				return XHR;
+			}
 		}).done(function (data, textStatus, xhr) {
 			damage_image_list.push(data['result']);
 			enableEditing(true);
+			$('#damageImageUploadProgress').parent().hide();
+			$('#damage-image-uploader').val('');
 		});
 	}
 
@@ -1092,6 +1114,8 @@
 
 		updateCanvas(img_x, img_y, img_scale, radius);
 		enableEditing(selected_damage);
+
+		$('#damageImageUploadProgress').parent().hide();
 	});
 </script>
 </body>

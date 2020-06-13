@@ -28,7 +28,7 @@
 			echo json_encode(['error' => 'File upload failed.']);
 		}
 	} else {
-		echo json_encode(['error' => 'File upload failed.']);
+		echo json_encode(['error' => 'File upload failed.', 'result' => $_FILES['file']['tmp_name']]);
 	}
 
 ?>

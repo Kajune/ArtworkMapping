@@ -56,11 +56,17 @@
 	$damage_list = json_encode($damage_list);
 
 	# idに紐づく損傷に紐づく画像
-	$damage_image_list = json_encode([
-		['id' => 0, 'damage.id' => 0, 'src' => '../img/damage/demaria11-damage1.jpg'],
-		['id' => 1, 'damage.id' => 2, 'src' => '../img/damage/demaria11-damage2.jpg'],
-		['id' => 2, 'damage.id' => 2, 'src' => '../img/damage/demaria11-damage3.jpg'],
-	]);
+	$damage_image_list = [];
+	$result = mysqli_query($sql, "SELECT damage_img.id, damage_img.damage_id, damage_img.img ".
+		"FROM damage_img JOIN damage ON damage_img.damage_id = damage.id WHERE `artwork_id` = $id");
+	if ($result) {
+		while ($row = $result->fetch_assoc()) {
+			$damage_image_list[] = $row;
+		}
+		mysqli_free_result($result);
+	}
+
+	$damage_image_list = json_encode($damage_image_list);
 ?>
 
 <!DOCTYPE html>
@@ -192,7 +198,7 @@
 						<div class="d-flex btn-toolbar">
 							<button class="btn btn-sm btn-secondary col-md-12 col-sm-6" id="add-damage-image">
 								<label style="width:100%;">
-									<input type="file" style="display:none" onchange="addDamageImage(event);">参考画像を追加
+									<input type="file" id="damage-image-uploader" style="display:none" onchange="addDamageImage(event);">参考画像を追加
 								</label>
 							</button>
 							<button class="btn btn-sm btn-warning col-md-12 col-sm-6" id="delete-damage-image" data-toggle="modal" data-target="#delete-damage-image-dialog">現在の画像を削除</button>
@@ -202,7 +208,7 @@
 					<div id="referenceImageControl" class="carousel slide col-md-6 col-sm-12" data-ride="carousel" data-interval="false">
 						<div class="carousel-inner" id="damage-image-list" style="background-color: gray; height: 15vw;">
 							<template id="damage-image">
-								<div class="carousel-item" style="max-width: 100%; height: 100%;">
+								<div class="carousel-item" name="" style="max-width: 100%; height: 100%;">
 									<img src="" data-toggle="modal" data-target="" class="thumbnail" style="max-width: 100%; max-height: 100%;">
 									<div class="modal fade" id="">
 										<div class="modal-dialog">
@@ -260,7 +266,7 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">いいえ</button>
-				<button type="button" class="btn btn-warning" onclick="deleteDamage()"; data-dismiss="modal">はい</button>
+				<button type="button" class="btn btn-warning" onclick="deleteDamage()" data-dismiss="modal">はい</button>
 			</div>
 		</div>
 	</div>
@@ -279,7 +285,7 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">いいえ</button>
-				<button type="button" class="btn btn-warning">はい</button>
+				<button type="button" class="btn btn-warning" onclick="deleteDamageImage()" data-dismiss="modal">はい</button>
 			</div>
 		</div>
 	</div>
@@ -520,14 +526,15 @@
 			var template = $('#damage-image').contents();
 			var first = true;
 			for (const damage_image of damage_image_list) {
-				if (damage_image['damage.id'] != selected_damage['id']) {
+				if (damage_image['damage_id'] != selected_damage['id']) {
 					continue;
 				}
 
 				var clone = template.clone();
-				clone.find('img').attr('src', damage_image['src']);
+				clone.find('img').attr('src', '../img/damage/' + damage_image['img']);
 				clone.find('img.thumbnail').attr('data-target', '#damage-image' + damage_image['id']);
 				clone.find('.modal').attr('id', 'damage-image' + damage_image['id']);
+				clone.attr('name', '' + damage_image['id']);
 				if (first) {
 					clone.addClass('active');
 					first = false;
@@ -553,7 +560,7 @@
 				selected_damage = damage;
 			}
 		}
-		if (minDistance > radius) {
+		if (minDistance > radius || moving_damage) {
 			selected_damage = null;
 		}
 		if (last_selected_damage != selected_damage) {
@@ -851,9 +858,11 @@
 	}
 
 	function deleteDamage() {
-		if (selected_damage) {
-			var data = { 'id': selected_damage['id'] };
+		if (!selected_damage) {
+			return;
 		}
+
+		var data = { 'id': selected_damage['id'] };
 
 		damage_list = damage_list.filter(d => d !== selected_damage);
 
@@ -965,14 +974,48 @@
 	}
 
 	function addDamageImage(e) {
-		if (e.target.files.length == 0) {
+		if (!selected_damage) {
 			return;
 		}
-		var reader = new FileReader();
-		reader.onload = function (e) {
-			alert(e.target.result);
+
+		var formData = new FormData();
+		formData.append('file', e.target.files[0]);
+		formData.append('damage_id', selected_damage['id']);
+
+		$('#damage-image-uploader').val('');
+
+		$.ajax({
+			type: "POST",
+			url: './addDamageImage.php',
+			processData: false, 
+			contentType: false,
+			cache: false,
+			dataType: 'json',
+			data: formData,
+		}).done(function (data, textStatus, xhr) {
+			damage_image_list.push(data['result']);
+			enableEditing(true);
+		});
+	}
+
+	function deleteDamageImage() {
+		if (!selected_damage) {
+			return;
 		}
-		reader.readAsDataURL(e.target.files[0]);
+
+		var delete_id = $('#damage-image-list').find('.active').attr('name');
+		if (typeof delete_id !== 'undefined') {
+			damage_image_list = damage_image_list.filter(d => d['id'] !== delete_id);
+
+			$.ajax({
+				type: "POST",
+				url: './deleteDamageImage.php',
+				dataType: 'json',
+				data: { 'id': delete_id },
+			}).done(function (data, textStatus, xhr) {
+				enableEditing(true);
+			});
+		}
 	}
 
 	//

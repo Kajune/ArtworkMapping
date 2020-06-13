@@ -6,8 +6,6 @@
 		exit;
 	}
 
-	$id = $_GET['id'];
-
 	require_once '../DSN.php';
 	$sql = mysqli_connect($dsn['host'], $dsn['user'], $dsn['pass'], 'artwork');
 
@@ -15,12 +13,16 @@
 		echo mysqli_error($sql);
 	}
 
-	$stmt = mysqli_prepare($sql, "SELECT name, comment, tag, img FROM artwork WHERE `deleted` = false AND `id` = ?");
-	mysqli_stmt_bind_param($stmt, "i", $id);
-	if (mysqli_stmt_execute($stmt) && 
-		mysqli_stmt_bind_result($stmt, $artwork_name, $artwork_comment, $artwork_tag, $artwork_img) && 
-		mysqli_stmt_fetch($stmt)) {
-		mysqli_stmt_close($stmt);
+	$id = $_GET['id'];
+	$id = mysqli_real_escape_string($sql, $id);
+
+	$result = mysqli_query($sql, "SELECT name, comment, tag, img FROM artwork WHERE `deleted` = false AND `id` = $id");
+	if ($result) {
+		$row = $result->fetch_assoc();
+		$artwork_name = $row['name'];
+		$artwork_comment = $row['comment'];
+		$artwork_tag = $row['tag'];
+		$artwork_img = $row['img'];
 	} else {
 		header('Location:../');
 	}
@@ -34,7 +36,6 @@
 			$row['src'] = '../img/shape/'.$row['src'];
 			$shape_list[] = $row;
 		}
-		$tmp_array = mysqli_fetch_assoc($result);
 		mysqli_free_result($result);
 	} else {
 		echo mysqli_error($sql);
@@ -43,12 +44,16 @@
 	$shape_list = json_encode($shape_list);
 
 	# idに紐づく損傷を取得する
-	$damage_list = json_encode([
-		['id' => 0, 'type' => '指紋', 'comment' => 'マヌケが付けた指紋', 'date' => '2015-06-20', 'color' => '#ff0000', 'shape_id' => 4, 'x' => 235, 'y' => 68],
-		['id' => 1, 'type' => 'カビ', 'comment' => 'カビですよろしくお願いします', 'date' => '2016-12-03', 'color' => '#00ff00', 'shape_id' => 1, 'x' => 463, 'y' => 1135],
-		['id' => 2, 'type' => '汚職', 'comment' => '政治家のお食事券', 'date' => '2016-12-31', 'color' => '#000000', 'shape_id' => 2, 'x' => 0, 'y' => 0],
-		['id' => 3, 'type' => '心の汚れ', 'comment' => '心が汚れている', 'date' => '2018-03-02', 'color' => '#0000ff', 'shape_id' => 3, 'x' => 730, 'y' => 87],
-	]);
+	$damage_list = [];
+	$result = mysqli_query($sql, "SELECT * FROM damage WHERE `artwork_id` = $id");
+	if ($result) {
+		while ($row = $result->fetch_assoc()) {
+			$damage_list[] = $row;
+		}
+		mysqli_free_result($result);
+	}
+
+	$damage_list = json_encode($damage_list);
 
 	# idに紐づく損傷に紐づく画像
 	$damage_image_list = json_encode([
@@ -82,7 +87,7 @@
 
 <div class="container-fluid main">
 	<div class="row">
-		<div class="col-lg-6 col-xl-6 col-md-12 col-sm-12 col-xs-12 card">
+		<div class="col-lg-7 col-xl-7 col-md-12 col-sm-12 col-xs-12 card">
 			<div class="card-body">
 				<div class="row">
 					<h2 class="col-md-9 col-sm-12"><?php echo $artwork_name; ?></h2>
@@ -120,7 +125,7 @@
 			</div>
 		</div>
 
-		<div class="col-lg-6 col-xl-6 col-md-12 col-sm-12 col-xs-12 card">
+		<div class="col-lg-5 col-xl-5 col-md-12 col-sm-12 col-xs-12 card">
 			<div class="row card-body justify-content-around">
 				<div class="form-group d-flex btn-toolbar row justify-content-around col-12">
 					<button class="btn btn-secondary col-md-3 col-sm-6" id="create-new-damage" onclick="createDamage()">
@@ -144,28 +149,29 @@
 				<div class="form-group row col-12">
 					<label for="damage-type" class="col-3 col-form-label">種類</label>
 					<div class="col-6">
-						<input type="text" class="form-control" id="damage-type" placeholder="種類">
+						<input type="text" class="form-control" id="damage-type" placeholder="種類" onchange="changeType(event)">
 					</div>
 				</div>
 
 				<div class="form-group row col-12">
 					<label for="damage-comment" class="col-3 col-form-label">コメント</label>
 					<div class="col-9">
-						<textarea type="text" class="form-control" id="damage-comment" placeholder="コメント"></textarea>
+						<textarea type="text" class="form-control" id="damage-comment" placeholder="コメント" onchange="changeComment(event)"></textarea>
 					</div>
 				</div>
 
 				<div class="form-group row col-12">
 					<label for="damage-date" class="col-3 col-form-label">登録日</label>
 					<div class="col-9">
-						<input type="date" class="form-control" id="damage-date">
+						<input type="date" class="form-control" id="damage-date" onchange="changeDate(event)">
 					</div>
 				</div>
 
 				<div class="form-group row col-12">
 					<label for="color" class="col-3 col-form-label">色・形状</label>
 					<div class="col-3">
-						<input type="color" class="form-control" id="damage-color" value="#000000" style="margin:0px; border:0px;">
+						<input type="color" class="form-control" id="damage-color" value="#000000" 
+						style="margin:0px; border:0px;" onchange="changeColor(event)">
 					</div>
 
 					<div class="btn-group btn-group-toggle col-md-6 col-sm-12 text-left" data-toggle="buttons" 
@@ -180,7 +186,7 @@
 				</div>
 
 				<div class="form-group row col-12">
-					<div class="col-md-3 col-sm-12">
+					<div class="col-md-4 col-sm-12">
 						<label for="referenceImageControl" class="col-form-label">参考画像</label>
 
 						<div class="d-flex btn-toolbar">
@@ -193,12 +199,11 @@
 						</div>
 					</div>
 
-					<div id="referenceImageControl" class="carousel slide col-md-6 col-sm-12" data-ride="carousel" data-interval="false" 
-						style="background-color: gray;">
-						<div class="carousel-inner" id="damage-image-list">
+					<div id="referenceImageControl" class="carousel slide col-md-6 col-sm-12" data-ride="carousel" data-interval="false">
+						<div class="carousel-inner" id="damage-image-list" style="background-color: gray; height: 15vw;">
 							<template id="damage-image">
-								<div class="carousel-item">
-									<img src="" style="width: 100%; height: auto;" data-toggle="modal" data-target="" class="thumbnail">
+								<div class="carousel-item" style="max-width: 100%; height: 100%;">
+									<img src="" data-toggle="modal" data-target="" class="thumbnail" style="max-width: 100%; max-height: 100%;">
 									<div class="modal fade" id="">
 										<div class="modal-dialog">
 											<div class="modal-body"><img src="" style="width: 100%; height: auto;"></div>
@@ -220,7 +225,7 @@
 			</div>
 		</div>
 
-		<div class="col-lg-6 col-xl-6 col-md-12 col-sm-12 col-xs-12 card">
+		<div class="col-lg-7 col-xl-7 col-md-12 col-sm-12 col-xs-12 card">
 			<div class="row card-body">
 				<div class="form-group d-flex col-12">
 					<input type="text" class="form-control col-9" id="artwork_tag" placeholder="タグ(コンマ区切り)" value="<?php echo $artwork_tag; ?>">
@@ -255,7 +260,7 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">いいえ</button>
-				<button type="button" class="btn btn-warning">はい</button>
+				<button type="button" class="btn btn-warning" onclick="deleteDamage()"; data-dismiss="modal">はい</button>
 			</div>
 		</div>
 	</div>
@@ -440,6 +445,7 @@
 	//
 	var damage_list = <?php echo $damage_list; ?>;
 	var selected_damage = null;
+	var moving_damage = null;
 	var year_list = [];
 	for (const damage of damage_list) {
 		damage['date'] = new Date(damage['date']);
@@ -462,11 +468,15 @@
 		return yyyy+'-'+mm+'-'+dd;
 	}
 
-	var defaultDmageValue = {
+	var defaultDamageValue = {
 		'type' : '',
 		'color': $('#damage-color').val(),
 		'shape_id' : shape_list[0]['id'],
 	};
+
+	//
+	// 描画関係
+	//
 
 	function enableEditing(enable) {
 //		$('#create-new-damage').prop("disabled", enable);
@@ -572,10 +582,6 @@
 			mem_context.clearRect(0, 0, mem_canvas.width, mem_canvas.height);
 
 			var shape_img_tmp = shape_imgs[damage['shape_id']];
-			var x = damage['x'] - scaled_marker_size / 2;
-			var y = damage['y'] - scaled_marker_size / 2;
-			var w = scaled_marker_size;
-			var h = scaled_marker_size;
 
 			const margin = 0.1;
 			mem_context.drawImage(shape_img_tmp, 0, 0, shape_img_tmp.width, shape_img_tmp.height, 
@@ -590,12 +596,22 @@
 				0, 0, mem_canvas.width, mem_canvas.height);
 			mem_context.globalCompositeOperation = "source-over";
 
-			if (selected_damage === damage) {
+			if (selected_damage === damage || moving_damage === damage) {
 				mem_context.lineWidth = marker_size * margin;
 				mem_context.strokeStyle = 'white';
 				mem_context.beginPath();
 				mem_context.arc(mem_canvas.width / 2, mem_canvas.height / 2, marker_size / 2, 0, Math.PI * 2);
 				mem_context.stroke();
+			}
+
+			var x = damage['x'] - scaled_marker_size / 2;
+			var y = damage['y'] - scaled_marker_size / 2;
+			var w = scaled_marker_size;
+			var h = scaled_marker_size;
+
+			if (moving_damage === damage) {
+				x = -img_x * canvas.width / real_scale / 2 + img.width / 2 - w / 2;
+				y = img_y * canvas.height / real_scale / 2 + img.height / 2 - h / 2;
 			}
 
 			context.drawImage(mem_canvas, 0, 0, mem_canvas.width, mem_canvas.height, x, y, w, h);
@@ -648,6 +664,10 @@
 		drawReticle();
 		drawSubImage(x, y, real_scale);
 	}
+
+	//
+	// 拡大図操作関係
+	//
 
 	function onMouseDown(event) {
 		if (event.button === 0) {
@@ -773,20 +793,9 @@
 		event.preventDefault();
 	}
 
-	function beginMoveDamage() {
-		$('#beginMoveDamageButton').hide();		
-		$('#endMoveDamageButtons').show();
-	}
-
-	function endMoveDamage() {
-		$('#endMoveDamageButtons').hide();
-		$('#beginMoveDamageButton').show();
-	}
-
-	function cancelMoveDamage() {
-		$('#endMoveDamageButtons').hide();
-		$('#beginMoveDamageButton').show();
-	}
+	//
+	// 美術品の情報更新
+	//
 
 	function updateArtwork(del=false) {
 		var data = { 'id': id, 
@@ -802,15 +811,19 @@
 		}).done(function (data, textStatus, xhr) { if (del) { location.href = "../"; } });
 	}
 
+	//
+	// 損傷編集関係
+	//
+
 	function createDamage() {
 		var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * img_scale;
 		var centerX = -img_x * canvas.width / real_scale / 2 + img.width / 2;
 		var centerY = img_y * canvas.height / real_scale / 2 + img.height / 2;
 
 		var data = { 'artwork_id': id,
-			'type' : defaultDmageValue['type'],
-			'color' : defaultDmageValue['color'],
-			'shape_id' : defaultDmageValue['shape_id'],
+			'type' : defaultDamageValue['type'],
+			'color' : defaultDamageValue['color'],
+			'shape_id' : defaultDamageValue['shape_id'],
 			'x' : centerX, 
 			'y' : centerY, };
 
@@ -837,17 +850,118 @@
 		});
 	}
 
-	function changeVisibleYear(e) {
-		for (const damage of damage_list) {
-			if (damage['date'].getFullYear() == e.target.name) {
-				damage['visible'] = e.target.checked;
-			}
+	function deleteDamage() {
+		if (selected_damage) {
+			var data = { 'id': selected_damage['id'] };
+		}
+
+		damage_list = damage_list.filter(d => d !== selected_damage);
+
+		$.ajax({
+			type: "POST",
+			url: './deleteDamage.php',
+			dataType: 'json',
+			data: data,
+		}).done(function (data, textStatus, xhr) {
+			updateYearCheckbox();
+			updateCanvas(img_x, img_y, img_scale);
+		});
+	}
+
+	function changeType(e) {
+		if (selected_damage) {
+			selected_damage['type'] = e.target.value;
+			updateDamage(selected_damage);
+		}
+		defaultDamageValue['type'] = e.target.value;
+	}
+
+	function changeComment(e) {
+		if (selected_damage) {
+			selected_damage['comment'] = e.target.value;
+			updateDamage(selected_damage);
+		}
+	}
+
+	function changeDate(e) {
+		if (selected_damage) {
+			selected_damage['date'] = new Date(e.target.value);
+			updateDamage(selected_damage);
+			updateYearCheckbox();
+		}
+	}
+
+	function changeColor(e) {
+		if (selected_damage) {
+			selected_damage['color'] = e.target.value;
+			updateDamage(selected_damage);
+			updateCanvas(img_x, img_y, img_scale);
+		}
+		defaultDamageValue['color'] = e.target.value;
+	}
+
+	function changeShape(e) {
+		if (selected_damage) {
+			selected_damage['shape_id'] = e.target.name;
+			updateDamage(selected_damage);
+			updateCanvas(img_x, img_y, img_scale);
+		}
+		defaultDamageValue['shape_id'] = e.target.name;
+	}
+
+	function updateDamage(damage) {
+		var data = {
+			'type' : damage['type'],
+			'comment': damage['comment'],
+			'date': dateToISO(damage['date']),
+			'color' : damage['color'],
+			'shape_id' : damage['shape_id'],
+			'x' : damage['x'], 
+			'y' : damage['y'], 
+			'id' : damage['id'],
+		};
+
+		$.ajax({
+			type: "POST",
+			url: './updateDamage.php',
+			dataType: 'json',
+			data: data,
+		});
+	}
+
+	function beginMoveDamage() {
+		if (!selected_damage) {
+			return;
+		}
+		$('#beginMoveDamageButton').hide();		
+		$('#endMoveDamageButtons').show();
+		moving_damage = selected_damage;
+		updateCanvas(img_x, img_y, img_scale);
+	}
+
+	function endMoveDamage() {
+		$('#endMoveDamageButtons').hide();
+		$('#beginMoveDamageButton').show();
+
+		if (moving_damage) {
+			var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * img_scale;
+			var centerX = -img_x * canvas.width / real_scale / 2 + img.width / 2;
+			var centerY = img_y * canvas.height / real_scale / 2 + img.height / 2;
+
+			moving_damage['x'] = centerX;
+			moving_damage['y'] = centerY;
+
+			updateDamage(moving_damage);
+			moving_damage = null;
 		}
 		updateCanvas(img_x, img_y, img_scale);
 	}
 
-	function changeShape(e) {
-		defaultDmageValue['shape_id'] = e.target.name;
+	function cancelMoveDamage() {
+		$('#endMoveDamageButtons').hide();
+		$('#beginMoveDamageButton').show();
+		moving_damage = null;
+		updateCanvas(img_x, img_y, img_scale);
 	}
 
 	function addDamageImage(e) {
@@ -861,25 +975,51 @@
 		reader.readAsDataURL(e.target.files[0]);
 	}
 
+	//
+	// 左側の表示年度関係
+	//
+
+	function changeVisibleYear(e) {
+		for (const damage of damage_list) {
+			if (damage['date'].getFullYear() == e.target.name) {
+				damage['visible'] = e.target.checked;
+			}
+		}
+		updateCanvas(img_x, img_y, img_scale);
+	}
+
 	function addNewYear(id) {
 		var clone = $('#year-checkbox').contents().clone(true);
 
-		clone.find('.form-check-input').attr('id', 'visible-' + id);
-		clone.find('.form-check-input').attr('name', id);
-		clone.find('.form-check-label').attr('htmlFor', 'visible-' + id);
+		clone.find('.form-check-input').prop('id', 'visible-' + id);
+		clone.find('.form-check-input').prop('name', id);
+		clone.find('.form-check-label').prop('htmlFor', 'visible-' + id);
 		clone.find('.form-check-label').text(id);
 
 		$('#year-list').append(clone);
 	}
 
-	function removeYear(year) {
-		$('#year-list').children().find('[name=' + year + ']').parent().remove();
-	}
+	function updateYearCheckbox() {
+		year_list = [];
+		for (const damage of damage_list) {
+			var year = damage['date'].getFullYear();
+			if (year_list.indexOf(year) == -1) {
+				year_list.push(year);
+			}
+		}
+		year_list.sort();
 
-	$(document).ready(function() {
+		$('#year-list').find('div').remove();
 		for (var i = 0; i < year_list.length; i++) {
 			addNewYear(year_list[i]);	
 		}
+	}
+
+	//
+	// 初期化
+	//
+	$(window).on('load', function() {
+		updateYearCheckbox();
 
 		canvas.addEventListener('mousedown', onMouseDown, false);
 		canvas.addEventListener('mouseup', onMouseUp, false);
@@ -906,9 +1046,7 @@
 
 			$('#damage-shape-buttons').append(clone);
 		}
-	});
 
-	$(window).on('load', function() {
 		updateCanvas(img_x, img_y, img_scale, radius);
 		enableEditing(selected_damage);
 	});

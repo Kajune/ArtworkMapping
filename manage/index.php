@@ -1177,7 +1177,7 @@
 		for (const damage of damage_list) {
 			if (damage['date'].getFullYear() == e.target.name) {
 				damage['visible'] = e.target.checked &&
-					(damage['type'] == '' || $('#visible-' + damage['type']).prop('checked'));
+					(damage['type'] == '' || $('#visible-' + btoa(encodeURIComponent(damage['type']))).prop('checked'));
 			}
 		}
 		updateCanvas(img_x, img_y, img_scale);
@@ -1196,9 +1196,9 @@
 	function addNewType(id) {
 		var clone = $('#type-checkbox').contents().clone(true);
 
-		clone.find('.form-check-input').prop('id', 'visible-' + id);
+		clone.find('.form-check-input').prop('id', 'visible-' + btoa(encodeURIComponent(id)));
 		clone.find('.form-check-input').prop('name', id);
-		clone.find('.form-check-label').prop('htmlFor', 'visible-' + id);
+		clone.find('.form-check-label').prop('htmlFor', 'visible-' + btoa(encodeURIComponent(id)));
 		clone.find('.form-check-label').text(id);
 
 		$('#type-list').append(clone);

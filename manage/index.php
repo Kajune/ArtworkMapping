@@ -124,7 +124,7 @@
 						<div class="d-flex justify-content-around form-row" id="year-list">
 							<template id="year-checkbox">
 								<button class="badge badge-pill badge-light text-wrap">
-									<div class="form-check form-control-lg col-sm-12 col-3" onchange="changeVisibleYear(event);">
+									<div class="form-check form-control-sm col-sm-12 col-3" onchange="changeVisibleYear(event);">
 										<input class="form-check-input" type="checkbox" value="" id="" checked>
 										<label class="form-check-label text-nowrap" for="" style="font-size: 80%;"></label>
 									</div>
@@ -137,7 +137,7 @@
 						<div class="d-flex justify-content-around form-row" id="type-list">
 							<template id="type-checkbox">
 								<button class="badge badge-pill badge-light text-wrap">
-									<div class="form-check form-control-lg col-sm-12 col-3" onchange="changeVisibleType(event);">
+									<div class="form-check form-control-sm col-sm-12 col-3" onchange="changeVisibleType(event);">
 										<input class="form-check-input" type="checkbox" value="" id="" checked>
 										<label class="form-check-label text-nowrap" for="" style="font-size: 80%;"></label>
 									</div>
@@ -1177,7 +1177,7 @@
 		for (const damage of damage_list) {
 			if (damage['date'].getFullYear() == e.target.name) {
 				damage['visible'] = e.target.checked &&
-					$('#visible-' + damage['type']).prop('checked');
+					(damage['type'] == '' || $('#visible-' + damage['type']).prop('checked'));
 			}
 		}
 		updateCanvas(img_x, img_y, img_scale);

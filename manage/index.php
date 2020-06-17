@@ -28,6 +28,7 @@
 	}
 
 	$artwork_img = "../img/artwork/".$artwork_img;
+	list($width, $height, $type, $attr) = getimagesize($artwork_img);
 
 	# 図形のリスト
 	$shape_list = [];
@@ -188,6 +189,9 @@
 								<img class="shape-img" src="" style="width:auto; height:2.5vh;">
 							</button>
 						</template>
+						<label for="damage-radius">サイズ</label>
+						<input type="range" class="custom-range" id="damage-radius" min="0" max="<?php echo $width * 0.1; ?>" value="0" 
+							onmousemove="changeRadius(event)" ontouchmove="changeRadius(event)" onchange="changeRadius(event,true)">
 					</div>
 				</div>
 
@@ -482,6 +486,7 @@
 		'type' : '',
 		'color': $('#damage-color').val(),
 		'shape_id' : shape_list[0]['id'],
+		'radius': 0,
 	};
 
 	//
@@ -497,6 +502,7 @@
 		$('#damage-comment').prop("disabled", !enable);
 		$('#damage-date').prop("disabled", !enable);
 		$('#damage-color').prop("disabled", !enable);
+		$('#damage-radius').prop("disabled", !enable);
 		$('button.shape-button').prop("disabled", !enable);
 		$('#add-damage-image').prop("disabled", !enable);
 		$('#delete-damage-image').prop("disabled", !enable);
@@ -509,13 +515,15 @@
 			today.setDate(today.getDate());
 			$('#damage-date').val(dateToISO(today));
 			$('#damage-color').val('#000000');
-
+			$('#damage-radius').val(0.0);
+			
 			$('#damage-image-list').children().not('template').remove();
 		} else {
 			$('#damage-type').val(selected_damage['type']);
 			$('#damage-comment').val(selected_damage['comment']);
 			$('#damage-date').val(dateToISO(selected_damage['date']));
 			$('#damage-color').val(selected_damage['color']);
+			$('#damage-radius').val(selected_damage['radius']);
 
 			var shape_button = $('input.shape-button');
 			shape_button.prop('checked', false);
@@ -584,12 +592,44 @@
 		context.translate(x * 0.5 * canvas.width / real_scale, -y * 0.5 * canvas.height / real_scale);
 		context.drawImage(img, 0, 0);
 
-		mem_canvas = document.createElement("canvas");
+		for (const damage of damage_list) {
+			if (!damage['visible']) {
+				continue;
+			}
+			
+			if (damage['radius'] > 0) {
+				var shape_img_tmp = shape_imgs[damage['shape_id']];
+
+				var rad_canvas = document.createElement("canvas");
+				rad_canvas.width = damage['radius'] * 2;
+				rad_canvas.height = damage['radius'] * 2;
+				var rad_context = rad_canvas.getContext('2d');
+
+				rad_context.drawImage(shape_img_tmp, 0, 0, shape_img_tmp.width, shape_img_tmp.height, 
+									0, 0, rad_canvas.width, rad_canvas.height);
+				rad_context.fillStyle = damage['color'];
+				rad_context.globalCompositeOperation = "source-atop";
+				rad_context.fillRect(0, 0, rad_canvas.width, rad_canvas.height);
+				rad_context.globalCompositeOperation = "source-over";
+
+				var x = damage['x'] - damage['radius'];
+				var y = damage['y'] - damage['radius'];
+				var w = damage['radius'] * 2;
+				var h = damage['radius'] * 2;
+
+				context.globalAlpha = 0.5;
+				context.drawImage(rad_canvas, 0, 0, rad_canvas.width, rad_canvas.height, x, y, w, h);
+				context.globalAlpha = 1.0;
+			}
+		}
+
+
+		var mem_canvas = document.createElement("canvas");
 		mem_canvas.width = marker_size;
 		mem_canvas.height = marker_size;
-		var mem_context = mem_canvas.getContext('2d');		
-
+		var mem_context = mem_canvas.getContext('2d');
 		var scaled_marker_size = marker_size / real_scale;
+
 		for (const damage of damage_list) {
 			if (!damage['visible']) {
 				continue;
@@ -840,7 +880,9 @@
 			'color' : defaultDamageValue['color'],
 			'shape_id' : defaultDamageValue['shape_id'],
 			'x' : centerX, 
-			'y' : centerY, };
+			'y' : centerY, 
+			'radius' : defaultDamageValue['radius'],
+		};
 
 		$.ajax({
 			type: "POST",
@@ -917,6 +959,17 @@
 		defaultDamageValue['color'] = e.target.value;
 	}
 
+	function changeRadius(e, upload=false) {
+		if (selected_damage) {
+			selected_damage['radius'] = e.target.value;
+			if (upload) {
+				updateDamage(selected_damage);
+			}
+			updateCanvas(img_x, img_y, img_scale);
+		}
+		defaultDamageValue['radius'] = e.target.value;
+	}
+
 	function changeShape(e) {
 		if (selected_damage) {
 			selected_damage['shape_id'] = e.target.name;
@@ -936,6 +989,7 @@
 			'x' : damage['x'], 
 			'y' : damage['y'], 
 			'id' : damage['id'],
+			'radius': damage['radius'],
 		};
 
 		$.ajax({

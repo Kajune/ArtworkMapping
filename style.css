@@ -44,3 +44,7 @@ a:link {
 	width:100%; height:100%; 
 	position:absolute; top:0px; left:0px;
 }
+
+#ex1Slider .slider-selection {
+	background: #BABABA;
+}

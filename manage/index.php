@@ -89,6 +89,14 @@
 	<script type="text/javascript">
 		var id = <?php echo $id; ?>
 	</script>
+
+	<style type="text/css">
+		.carousel-caption {
+			position: absolute;
+			top: 90%;
+			transform: translateY(-100%);
+		}
+	</style>
 </head>
 <body>
 
@@ -111,19 +119,39 @@
 							</div>
 						</figure>
 
+						<hr>
+						<h4>登録年</h4>
 						<div class="d-flex justify-content-around form-row" id="year-list">
 							<template id="year-checkbox">
-								<div class="form-check form-control-lg col-sm-12 col-3" onchange="changeVisibleYear(event);">
-									<input class="form-check-input" type="checkbox" value="" id="" checked>
-									<label class="form-check-label" for=""></label>
-								</div>
+								<button class="badge badge-pill badge-light text-wrap">
+									<div class="form-check form-control-lg col-sm-12 col-3" onchange="changeVisibleYear(event);">
+										<input class="form-check-input" type="checkbox" value="" id="" checked>
+										<label class="form-check-label text-nowrap" for="" style="font-size: 80%;"></label>
+									</div>
+								</button>
 							</template>
 						</div>
+
+						<hr>
+						<h4>種類</h4>
+						<div class="d-flex justify-content-around form-row" id="type-list">
+							<template id="type-checkbox">
+								<button class="badge badge-pill badge-light text-wrap">
+									<div class="form-check form-control-lg col-sm-12 col-3" onchange="changeVisibleType(event);">
+										<input class="form-check-input" type="checkbox" value="" id="" checked>
+										<label class="form-check-label text-nowrap" for="" style="font-size: 80%;"></label>
+									</div>
+								</button>
+							</template>
+						</div>
+						<hr>
 					</div>
 
 					<div class="figure col-sm-9 col-xs-12" style="padding: 0px; margin: 0px;">
 						<figcaption class="figure-caption">拡大図</figcaption>
 						<canvas id="artwork_canvas" width="1000" height="1000" style="background-color:gray; width:100%; height: auto;"></canvas>
+						<button class="btn btn-secondary float-left" onclick="scale(false)">+</button>
+						<button class="btn btn-secondary float-left" onclick="scale(true)">-</button>
 						<small>損傷を選択するには、損傷を中央の円内に収める</small>
 					</div>
 				</div>
@@ -155,7 +183,7 @@
 
 				<div class="form-group row col-12">
 					<label for="damage-type" class="col-3 col-form-label">種類</label>
-					<div class="col-6">
+					<div class="col-9">
 						<input type="text" class="form-control" id="damage-type" placeholder="種類" onchange="changeType(event)">
 					</div>
 				</div>
@@ -163,7 +191,7 @@
 				<div class="form-group row col-12">
 					<label for="damage-comment" class="col-3 col-form-label">コメント</label>
 					<div class="col-9">
-						<textarea type="text" class="form-control" id="damage-comment" placeholder="コメント" onchange="changeComment(event)"></textarea>
+						<textarea type="text" rows="4" class="form-control" id="damage-comment" placeholder="コメント" onchange="changeComment(event)"></textarea>
 					</div>
 				</div>
 
@@ -214,7 +242,7 @@
 					</div>
 
 					<div id="referenceImageControl" class="carousel slide col-md-6 col-sm-12" data-ride="carousel" data-interval="false">
-						<div class="carousel-inner" id="damage-image-list" style="background-color: gray; height: 15vw;">
+						<div class="carousel-inner" id="damage-image-list" style="background-color: gray; height: 15vh;">
 							<template id="damage-image">
 								<div class="carousel-item" name="" style="max-width: 100%; height: 100%;">
 									<img src="" data-toggle="modal" data-target="" class="thumbnail" style="max-width: 100%; max-height: 100%;">
@@ -222,6 +250,9 @@
 										<div class="modal-dialog">
 											<div class="modal-body"><img src="" style="width: 100%; height: auto;"></div>
 										</div>
+									</div>
+									<div class="carousel-caption">
+										<label class="damage-image-index" data-toggle="modal" data-target="" style="text-shadow:2px 2px 2px #000000;"></label>
 									</div>
 								</div>
 							</template>
@@ -243,12 +274,18 @@
 			<div class="row card-body">
 				<div class="form-group d-flex col-12">
 					<input type="text" class="form-control col-9" id="artwork_tag" placeholder="タグ(コンマ区切り)" value="<?php echo $artwork_tag; ?>">
-					<button class="btn btn-secondary col-3" onclick="updateArtwork()">タグを更新</button>
+					<button class="btn btn-secondary col-3" onclick="updateTag()">タグを更新</button>
+				</div>
+				<div class="form-group d-flex col-12">
+					<label id="tag-update-msg"></label>
 				</div>
 
 				<div class="form-group d-flex col-12">
 					<textarea class="form-control col-9" id="artwork_comment"><?php echo $artwork_comment; ?></textarea>
-					<button class="btn btn-secondary col-3" onclick="updateArtwork()">コメントを更新</button>
+					<button class="btn btn-secondary col-3" onclick="updateComment()">コメントを更新</button>
+				</div>
+				<div class="form-group d-flex col-12">
+					<label id="comment-update-msg"></label>
 				</div>
 
 				<div class="form-group d-flex col-12">
@@ -460,8 +497,12 @@
 	var damage_list = <?php echo $damage_list; ?>;
 	var selected_damage = null;
 	var moving_damage = null;
+	var type_list = [];
 	var year_list = [];
 	for (const damage of damage_list) {
+		if (type_list.indexOf(damage['type']) == -1) {
+			type_list.push(damage['type']);
+		}
 		damage['date'] = new Date(damage['date']);
 		var year = damage['date'].getFullYear();
 		if (year_list.indexOf(year) == -1) {
@@ -469,6 +510,8 @@
 		}
 		damage['visible'] = true;
 	}
+	type_list.sort();
+	year_list.sort();
 
 	//
 	// 損傷の参考画像の読み込み
@@ -537,6 +580,7 @@
 
 			var template = $('#damage-image').contents();
 			var first = true;
+			var count = 0;
 			for (const damage_image of damage_image_list) {
 				if (damage_image['damage_id'] != selected_damage['id']) {
 					continue;
@@ -545,13 +589,17 @@
 				var clone = template.clone();
 				clone.find('img').attr('src', '../img/damage/' + damage_image['img']);
 				clone.find('img.thumbnail').attr('data-target', '#damage-image' + damage_image['id']);
+				clone.find('label').attr('data-target', '#damage-image' + damage_image['id']);
 				clone.find('.modal').attr('id', 'damage-image' + damage_image['id']);
+				clone.find('.damage-image-index').text((count + 1) + '枚目');
 				clone.attr('name', '' + damage_image['id']);
 				if (first) {
 					clone.addClass('active');
 					first = false;
 				}
 				$('#damage-image-list').append(clone);
+
+				count++;
 			}
 
 			if (first) {
@@ -723,6 +771,20 @@
 	//
 	// 拡大図操作関係
 	//
+	function scale(up=true) {
+		var scale_change = 0.8;
+
+		if (up) {
+			img_scale *= scale_change;
+		} else {
+			img_scale /= scale_change;
+		}
+		if (img_scale < 1) {
+			scale_change /= img_scale;
+			img_scale = 1;
+		}
+		updateCanvas(img_x, img_y, img_scale);
+	}
 
 	function onMouseDown(event) {
 		if (event.button === 0) {
@@ -852,6 +914,18 @@
 	// 美術品の情報更新
 	//
 
+	function updateTag() {
+		$('#tag-update-msg').text('タグが更新されました');
+		updateArtwork(false);
+		setTimeout(function(){$('#tag-update-msg').text('');}, 5000);
+	}
+
+	function updateComment() {
+		$('#comment-update-msg').text('コメントが更新されました');
+		updateArtwork(false);
+		setTimeout(function(){$('#comment-update-msg').text('');}, 5000);
+	}
+
 	function updateArtwork(del=false) {
 		var data = { 'id': id, 
 			'artwork-tag': $('#artwork_tag').val(),
@@ -922,6 +996,7 @@
 			dataType: 'json',
 			data: data,
 		}).done(function (data, textStatus, xhr) {
+			updateTypeCheckbox();
 			updateYearCheckbox();
 			updateCanvas(img_x, img_y, img_scale);
 		});
@@ -931,6 +1006,7 @@
 		if (selected_damage) {
 			selected_damage['type'] = e.target.value;
 			updateDamage(selected_damage);
+			updateTypeCheckbox();
 		}
 		defaultDamageValue['type'] = e.target.value;
 	}
@@ -1097,14 +1173,35 @@
 	//
 	// 左側の表示年度関係
 	//
-
 	function changeVisibleYear(e) {
 		for (const damage of damage_list) {
 			if (damage['date'].getFullYear() == e.target.name) {
-				damage['visible'] = e.target.checked;
+				damage['visible'] = e.target.checked &&
+					$('#visible-' + damage['type']).prop('checked');
 			}
 		}
 		updateCanvas(img_x, img_y, img_scale);
+	}
+
+	function changeVisibleType(e) {
+		for (const damage of damage_list) {
+			if (damage['type'] == e.target.name) {
+				damage['visible'] = e.target.checked && 
+					$('#visible-' + damage['date'].getFullYear()).prop('checked');
+			}
+		}
+		updateCanvas(img_x, img_y, img_scale);
+	}
+
+	function addNewType(id) {
+		var clone = $('#type-checkbox').contents().clone(true);
+
+		clone.find('.form-check-input').prop('id', 'visible-' + id);
+		clone.find('.form-check-input').prop('name', id);
+		clone.find('.form-check-label').prop('htmlFor', 'visible-' + id);
+		clone.find('.form-check-label').text(id);
+
+		$('#type-list').append(clone);
 	}
 
 	function addNewYear(id) {
@@ -1118,6 +1215,21 @@
 		$('#year-list').append(clone);
 	}
 
+	function updateTypeCheckbox() {
+		type_list = [];
+		for (const damage of damage_list) {
+			if (type_list.indexOf(damage['type']) == -1 && damage['type'] !== '') {
+				type_list.push(damage['type']);
+			}
+		}
+		type_list.sort();
+
+		$('#type-list').find('button').remove();
+		for (var i = 0; i < type_list.length; i++) {
+			addNewType(type_list[i]);	
+		}
+	}
+
 	function updateYearCheckbox() {
 		year_list = [];
 		for (const damage of damage_list) {
@@ -1128,9 +1240,9 @@
 		}
 		year_list.sort();
 
-		$('#year-list').find('div').remove();
+		$('#year-list').find('button').remove();
 		for (var i = 0; i < year_list.length; i++) {
-			addNewYear(year_list[i]);	
+			addNewYear(year_list[i]);
 		}
 	}
 
@@ -1138,6 +1250,7 @@
 	// 初期化
 	//
 	$(window).on('load', function() {
+		updateTypeCheckbox();
 		updateYearCheckbox();
 
 		canvas.addEventListener('mousedown', onMouseDown, false);

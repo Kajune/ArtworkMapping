@@ -68,7 +68,7 @@
 	<template id="card-template">
 		<div class="col mb-4">
 			<div class="card h-100">
-				<img src="" class="card-img-top d-none d-sm-block artwork-thumbnail">
+				<img src="" class="card-img-top artwork-thumbnail">
 				<div class="card-body">
 					<h5 class="card-title artwork-name">美術品名</h5>
 					<a href="" type="button" class="btn-block btn-primary artwork-button">管理</a>

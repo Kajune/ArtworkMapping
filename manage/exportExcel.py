@@ -1,8 +1,9 @@
 import openpyxl
-import cv2
 import MySQLdb
 import datetime
 import numpy as np
+import sys
+import cv2
 
 A2Z = [chr(i) for i in range(65, 65+26)]
 
@@ -40,9 +41,9 @@ def fetchData(id):
 	return shapes, artwork, damage, damage_img
 
 def loadShapes(shapes):
-	shape_imgs = []
+	shape_imgs = {}
 	for shape in shapes:
-		shape_imgs.append(cv2.imread('img/shape/' + shape[2], cv2.IMREAD_UNCHANGED))
+		shape_imgs[shape[0]] = cv2.imread('../img/shape/' + shape[2], cv2.IMREAD_UNCHANGED)
 	return shape_imgs
 
 def drawImgOnOverlay(img, overlay, x, y, add=False):
@@ -76,7 +77,7 @@ def drawImgOnOverlay(img, overlay, x, y, add=False):
 	return overlay
 
 if __name__ == '__main__':
-	shapes, artwork, damages, damage_imgs = fetchData(id=30)
+	shapes, artwork, damages, damage_imgs = fetchData(id=int(sys.argv[1]))
 	shape_imgs = loadShapes(shapes)
 
 	wb = openpyxl.Workbook()
@@ -94,8 +95,11 @@ if __name__ == '__main__':
 
 	length = 100
 
-	img = cv2.imread('img/artwork/' + artwork[4])
+	img = cv2.imread('../img/artwork/' + artwork[4])
 	overlay = np.zeros((img.shape[0], img.shape[1], 4), dtype=np.uint8)
+
+	marker_size = int(20 * max(img.shape[1], img.shape[0]) / 1000)
+	text_size = int(max(img.shape[1], img.shape[0]) / 1000)
 
 	# 損傷を描画
 	for damage in damages:
@@ -103,7 +107,7 @@ if __name__ == '__main__':
 		radius = damage[9]
 		if radius > 0:
 			color = damage[5][1:]
-			color = np.array(tuple(int(color[i:i+2], 16) for i in (0, 2, 4))) / 255
+			color = np.array(tuple(int(color[i:i+2], 16) for i in (4, 2, 0))) / 255
 
 			shape_img = shape_imgs[damage[6]]
 			draw_img = np.zeros((shape_img.shape[0], shape_img.shape[1], 3), np.uint8)
@@ -118,7 +122,7 @@ if __name__ == '__main__':
 		x, y = damage[7], damage[8]
 
 		color = damage[5][1:]
-		color = np.array(tuple(int(color[i:i+2], 16) for i in (0, 2, 4))) / 255
+		color = np.array(tuple(int(color[i:i+2], 16) for i in (4, 2, 0))) / 255
 
 		shape_img = shape_imgs[damage[6]]
 		draw_img = np.zeros((shape_img.shape[0], shape_img.shape[1], 3), np.uint8)
@@ -127,15 +131,15 @@ if __name__ == '__main__':
 			resize_img = cv2.resize(shape_img[:,:,3], (shape_img.shape[1]-margin*2, shape_img.shape[0]-margin*2))
 			draw_img[margin:-margin,margin:-margin,i] = (resize_img * color[i]).astype(np.uint8)
 		draw_img = np.dstack((draw_img, shape_img[:,:,3:]))
+		draw_img = cv2.resize(draw_img, (marker_size, marker_size))
 
 		drawImgOnOverlay(draw_img, overlay, x, y)
 
 	for damage in damages:
 		x, y = damage[7], damage[8]
-		w, h = shape_img.shape[1], shape_img.shape[0]
-		shape_img = shape_imgs[damage[6]]
-		cv2.putText(overlay, str(damage[0]), (int(x+w/2+5), int(y-h/2+5)), cv2.FONT_HERSHEY_PLAIN, 4, (0, 0, 0, 255), 5, cv2.LINE_AA)
-		cv2.putText(overlay, str(damage[0]), (int(x+w/2), int(y-h/2)), cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255, 255), 5, cv2.LINE_AA)
+		w, h = text_size * 10, text_size * 10
+		cv2.putText(overlay, str(damage[0]), (int(x+w/2+text_size), int(y-h/2+text_size)), cv2.FONT_HERSHEY_PLAIN, int(text_size), (0, 0, 0, 255), text_size, cv2.LINE_AA)
+		cv2.putText(overlay, str(damage[0]), (int(x+w/2), int(y-h/2)), cv2.FONT_HERSHEY_PLAIN, int(text_size), (255, 255, 255, 255), text_size, cv2.LINE_AA)
 
 	scale = baseColWidth * length / img.shape[1]
 	img = cv2.resize(img, None, fx=scale, fy=scale)
@@ -169,7 +173,7 @@ if __name__ == '__main__':
 
 		for damage_img in damage_imgs:
 			if damage[0] == damage_img[1]:
-				img = cv2.imread('img/damage/' + damage_img[2])
+				img = cv2.imread('../img/damage/' + damage_img[2])
 				scale = defaultRowHeight * height / img.shape[0]
 				img = cv2.resize(img, None, fx=scale, fy=scale)
 				cv2.imwrite('tmp/' + damage_img[2], img)
@@ -180,4 +184,7 @@ if __name__ == '__main__':
 		row_count += row_step
 
 	dt_now = datetime.datetime.now()
-	wb.save('tmp/export_%s_%s.xlsx' % (artwork[1], dt_now.strftime('%Y-%m-%d %H-%M-%S')))
+	fname = 'tmp/export_%d_%s.xlsx' % (artwork[0], dt_now.strftime('%Y-%m-%d %H-%M-%S'))
+	wb.save(fname)
+	print(fname)
+

@@ -289,6 +289,7 @@
 				</div>
 
 				<div class="form-group d-flex col-12">
+					<button class="btn btn-success" onclick="export_to_excel()">Excelにエクスポート</button>
 					<button class="btn btn-danger" data-toggle="modal" data-target="#delete-artwork-dialog">この美術品を削除</button>
 				</div>
 			</div>
@@ -938,6 +939,21 @@
 			dataType: 'json',
 			data: data,
 		}).done(function (data, textStatus, xhr) { if (del) { location.href = "../"; } });
+	}
+
+	function export_to_excel() {
+		var data = { 'id': id };
+
+		$.ajax({
+			type: "POST",
+			url: './export.php',
+			dataType: 'json',
+			data: data,
+		}).done(function (data, textStatus, xhr) {
+			window.location.href = data['result'];
+		}).fail(function (data, textStatus, xhr) {
+			console.log(textStatus);
+		});
 	}
 
 	//

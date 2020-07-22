@@ -120,7 +120,7 @@
 						</figure>
 
 						<hr>
-						<h4>登録年</h4>
+<!--						<h4>登録年</h4>
 						<div class="d-flex justify-content-around form-row" id="year-list">
 							<template id="year-checkbox">
 								<button class="badge badge-pill badge-light text-wrap">
@@ -130,6 +130,11 @@
 									</div>
 								</button>
 							</template>
+						</div>-->
+
+						<h4>表示日</h4>
+						<div>
+							<input type="date" class="form-control" id="show-date" onchange="changeVisibleDate(event)">
 						</div>
 
 						<hr>
@@ -196,9 +201,16 @@
 				</div>
 
 				<div class="form-group row col-12">
-					<label for="damage-date" class="col-3 col-form-label">登録日</label>
+					<label for="damage-adddate" class="col-3 col-form-label">登録日</label>
 					<div class="col-9">
-						<input type="date" class="form-control" id="damage-date" onchange="changeDate(event)">
+						<input type="date" class="form-control" id="damage-adddate" onchange="changeAddDate(event)">
+					</div>
+				</div>
+
+				<div class="form-group row col-12">
+					<label for="damage-deldate" class="col-3 col-form-label">削除日</label>
+					<div class="col-9">
+						<input type="date" class="form-control" id="damage-deldate" onchange="changeDelDate(event)">
 					</div>
 				</div>
 
@@ -289,7 +301,8 @@
 				</div>
 
 				<div class="form-group d-flex col-12">
-					<button class="btn btn-success" onclick="export_to_excel()">Excelにエクスポート</button>
+					<button class="btn btn-success" onclick="export_to_excel()" id="export-btn">Excelにエクスポート<br>
+						<small hidden="1" id="export-wait-message">しばらくお待ち下さい</small></button>
 					<button class="btn btn-danger" data-toggle="modal" data-target="#delete-artwork-dialog">この美術品を削除</button>
 				</div>
 			</div>
@@ -504,11 +517,13 @@
 		if (type_list.indexOf(damage['type']) == -1) {
 			type_list.push(damage['type']);
 		}
-		damage['date'] = new Date(damage['date']);
-		var year = damage['date'].getFullYear();
-		if (year_list.indexOf(year) == -1) {
-			year_list.push(year);
-		}
+		damage['adddate'] = new Date(damage['adddate']);
+		damage['deldate'] = damage['deldate'] ? new Date(damage['deldate']) : null;
+
+//		var year = damage['adddate'].getFullYear();
+//		if (year_list.indexOf(year) == -1) {
+//			year_list.push(year);
+//		}
 		damage['visible'] = true;
 	}
 	type_list.sort();
@@ -520,6 +535,9 @@
 	var damage_image_list = <?php echo $damage_image_list; ?>;
 
 	function dateToISO(date) {
+		if (!date || date.toString() === "Invalid Date") {
+			return '0000-00-00';
+		}
 		var yyyy = date.getFullYear();
 		var mm = ("0"+(date.getMonth()+1)).slice(-2);
 		var dd = ("0"+date.getDate()).slice(-2);
@@ -544,7 +562,8 @@
 		$('#delete-damage').prop("disabled", !enable);
 		$('#damage-type').prop("disabled", !enable);
 		$('#damage-comment').prop("disabled", !enable);
-		$('#damage-date').prop("disabled", !enable);
+		$('#damage-adddate').prop("disabled", !enable);
+		$('#damage-deldate').prop("disabled", !enable);
 		$('#damage-color').prop("disabled", !enable);
 		$('#damage-radius').prop("disabled", !enable);
 		$('button.shape-button').prop("disabled", !enable);
@@ -565,7 +584,8 @@
 		} else {
 			$('#damage-type').val(selected_damage['type']);
 			$('#damage-comment').val(selected_damage['comment']);
-			$('#damage-date').val(dateToISO(selected_damage['date']));
+			$('#damage-adddate').val(dateToISO(selected_damage['adddate']));
+			$('#damage-deldate').val(dateToISO(selected_damage['deldate']));
 			$('#damage-color').val(selected_damage['color']);
 			$('#damage-radius').val(selected_damage['radius']);
 
@@ -943,6 +963,8 @@
 
 	function export_to_excel() {
 		var data = { 'id': id };
+		$('#export-wait-message').attr('hidden', false);
+		$('#export-btn').attr('disabled', true);
 
 		$.ajax({
 			type: "POST",
@@ -951,8 +973,13 @@
 			data: data,
 		}).done(function (data, textStatus, xhr) {
 			window.location.href = data['result'];
+			$('#export-wait-message').attr('hidden', true);
+			$('#export-btn').attr('disabled', false);
 		}).fail(function (data, textStatus, xhr) {
 			console.log(textStatus);
+			$('#export-wait-message').attr('hidden', true);
+			$('#export-btn').attr('disabled', false);
+			alert('Failed to Excel export. See console log.');
 		});
 	}
 
@@ -981,15 +1008,22 @@
 			data: data,
 		}).done(function (data, textStatus, xhr) {
 			var damage = data['result'];
-			damage['date'] = new Date(damage['date']);
-			var year = damage['date'].getFullYear();
-			var index = year_list.indexOf(year);
-			if (index == -1) {
-				year_list.push(year);
-				addNewYear(year);
-				damage['visible'] = true;
-			} else {
-				damage['visible'] = $('#visible-' + year).prop('checked');
+			damage['adddate'] = new Date(damage['adddate']);
+			damage['deldate'] = new Date(damage['deldate']);
+//			var year = damage['adddate'].getFullYear();
+//			var index = year_list.indexOf(year);
+//			if (index == -1) {
+//				year_list.push(year);
+//				addNewYear(year);
+//				damage['visible'] = true;
+//			} else {
+//				damage['visible'] = $('#visible-' + year).prop('checked');
+//			}
+
+			damage['visible'] = true;
+
+			if (damage['deldate'].toString() === "Invalid Date") {
+				damage['deldate'] = null;
 			}
 
 			damage_list.push(damage);
@@ -1013,7 +1047,7 @@
 			data: data,
 		}).done(function (data, textStatus, xhr) {
 			updateTypeCheckbox();
-			updateYearCheckbox();
+//			updateYearCheckbox();
 			updateCanvas(img_x, img_y, img_scale);
 		});
 	}
@@ -1034,11 +1068,23 @@
 		}
 	}
 
-	function changeDate(e) {
+	function changeAddDate(e) {
 		if (selected_damage) {
-			selected_damage['date'] = new Date(e.target.value);
+			selected_damage['adddate'] = new Date(e.target.value);
 			updateDamage(selected_damage);
-			updateYearCheckbox();
+//			updateYearCheckbox();
+		}
+	}
+
+	function changeDelDate(e) {
+		if (selected_damage) {
+			selected_damage['deldate'] = new Date(e.target.value);
+			if (selected_damage['deldate'].toString() === "Invalid Date") {
+				selected_damage['deldate'] = null;
+			}
+			updateDamage(selected_damage);
+			updateVisibleDamageByDate();
+//			updateYearCheckbox();
 		}
 	}
 
@@ -1075,7 +1121,8 @@
 		var data = {
 			'type' : damage['type'],
 			'comment': damage['comment'],
-			'date': dateToISO(damage['date']),
+			'adddate': dateToISO(damage['adddate']),
+			'deldate': dateToISO(damage['deldate']),
 			'color' : damage['color'],
 			'shape_id' : damage['shape_id'],
 			'x' : damage['x'], 
@@ -1189,21 +1236,45 @@
 	//
 	// 左側の表示年度関係
 	//
+	/*
 	function changeVisibleYear(e) {
 		for (const damage of damage_list) {
-			if (damage['date'].getFullYear() == e.target.name) {
+			if (damage['adddate'].getFullYear() == e.target.name) {
 				damage['visible'] = e.target.checked &&
 					(damage['type'] == '' || $('#visible-' + btoa(encodeURIComponent(damage['type']))).prop('checked'));
 			}
 		}
 		updateCanvas(img_x, img_y, img_scale);
+	}*/
+
+	function updateVisibleDamageByDate() {
+		date = new Date($('#show-date').val());
+		for (const damage of damage_list) {
+			if (date.toString() == 'Invalid date') {
+				damage['visible'] = true;
+				continue;
+			}
+			damage['visible'] = false;
+			if (damage['adddate'] > date) {
+				continue;
+			}
+			if (damage['deldate'] < date) {
+				continue;
+			}
+			damage['visible'] = true;
+		}
+		updateCanvas(img_x, img_y, img_scale);
+	}
+
+	function changeVisibleDate(e) {
+		updateVisibleDamageByDate();
 	}
 
 	function changeVisibleType(e) {
 		for (const damage of damage_list) {
 			if (damage['type'] == e.target.name) {
-				damage['visible'] = e.target.checked && 
-					$('#visible-' + damage['date'].getFullYear()).prop('checked');
+				damage['visible'] = e.target.checked;
+//					&& $('#visible-' + damage['adddate'].getFullYear()).prop('checked');
 			}
 		}
 		updateCanvas(img_x, img_y, img_scale);
@@ -1220,6 +1291,7 @@
 		$('#type-list').append(clone);
 	}
 
+	/*
 	function addNewYear(id) {
 		var clone = $('#year-checkbox').contents().clone(true);
 
@@ -1229,7 +1301,7 @@
 		clone.find('.form-check-label').text(id);
 
 		$('#year-list').append(clone);
-	}
+	}*/
 
 	function updateTypeCheckbox() {
 		type_list = [];
@@ -1246,10 +1318,11 @@
 		}
 	}
 
+	/*
 	function updateYearCheckbox() {
 		year_list = [];
 		for (const damage of damage_list) {
-			var year = damage['date'].getFullYear();
+			var year = damage['adddate'].getFullYear();
 			if (year_list.indexOf(year) == -1) {
 				year_list.push(year);
 			}
@@ -1260,14 +1333,14 @@
 		for (var i = 0; i < year_list.length; i++) {
 			addNewYear(year_list[i]);
 		}
-	}
+	}*/
 
 	//
 	// 初期化
 	//
 	$(window).on('load', function() {
 		updateTypeCheckbox();
-		updateYearCheckbox();
+//		updateYearCheckbox();
 
 		canvas.addEventListener('mousedown', onMouseDown, false);
 		canvas.addEventListener('mouseup', onMouseUp, false);
@@ -1299,6 +1372,9 @@
 		enableEditing(selected_damage);
 
 		$('#damageImageUploadProgress').parent().hide();
+
+		$('#show-date').val(dateToISO(new Date()));
+		updateVisibleDamageByDate($('#show-date').val());
 	});
 </script>
 </body>

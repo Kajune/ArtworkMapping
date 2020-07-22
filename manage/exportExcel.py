@@ -103,13 +103,13 @@ if __name__ == '__main__':
 
 	# 損傷を描画
 	for damage in damages:
-		x, y = damage[7], damage[8]
-		radius = damage[9]
+		x, y = damage[8], damage[9]
+		radius = damage[10]
 		if radius > 0:
-			color = damage[5][1:]
+			color = damage[6][1:]
 			color = np.array(tuple(int(color[i:i+2], 16) for i in (4, 2, 0))) / 255
 
-			shape_img = shape_imgs[damage[6]]
+			shape_img = shape_imgs[damage[7]]
 			draw_img = np.zeros((shape_img.shape[0], shape_img.shape[1], 3), np.uint8)
 			for i in range(draw_img.shape[2]):
 				draw_img[:,:,i] = (shape_img[:,:,3] * color[i]).astype(np.uint8)
@@ -119,12 +119,12 @@ if __name__ == '__main__':
 			drawImgOnOverlay(draw_img, overlay, x, y, True)
 
 	for damage in damages:
-		x, y = damage[7], damage[8]
+		x, y = damage[8], damage[9]
 
-		color = damage[5][1:]
+		color = damage[6][1:]
 		color = np.array(tuple(int(color[i:i+2], 16) for i in (4, 2, 0))) / 255
 
-		shape_img = shape_imgs[damage[6]]
+		shape_img = shape_imgs[damage[7]]
 		draw_img = np.zeros((shape_img.shape[0], shape_img.shape[1], 3), np.uint8)
 		margin = int(shape_img.shape[0] * 0.1)
 		for i in range(draw_img.shape[2]):
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 		drawImgOnOverlay(draw_img, overlay, x, y)
 
 	for damage in damages:
-		x, y = damage[7], damage[8]
+		x, y = damage[8], damage[9]
 		w, h = text_size * 10, text_size * 10
 		cv2.putText(overlay, str(damage[0]), (int(x+w/2+text_size), int(y-h/2+text_size)), cv2.FONT_HERSHEY_PLAIN, int(text_size), (0, 0, 0, 255), text_size, cv2.LINE_AA)
 		cv2.putText(overlay, str(damage[0]), (int(x+w/2), int(y-h/2)), cv2.FONT_HERSHEY_PLAIN, int(text_size), (255, 255, 255, 255), text_size, cv2.LINE_AA)
@@ -170,6 +170,8 @@ if __name__ == '__main__':
 		ws['A' + str(row_count+3)] = damage[3]
 		ws['A' + str(row_count+4)] = '登録日'
 		ws['B' + str(row_count+4)] = damage[4]
+		ws['A' + str(row_count+5)] = '削除日'
+		ws['B' + str(row_count+5)] = damage[5]
 
 		for damage_img in damage_imgs:
 			if damage[0] == damage_img[1]:

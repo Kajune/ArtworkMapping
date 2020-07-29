@@ -71,7 +71,7 @@
 				<img src="" class="card-img-top artwork-thumbnail">
 				<div class="card-body">
 					<h5 class="card-title artwork-name">美術品名</h5>
-					<a href="" type="button" class="btn-block btn-primary artwork-button">管理</a>
+					<a href="" type="button" class="btn-block btn-primary go-manage">管理</a>
 					<div class="badge-area justify-content-around"></div>
 					<p class="card-text artwork-comment">説明・コメント</p>
 					<p class="card-text"><small class="text-muted artwork-last-update"></small></p>
@@ -163,7 +163,7 @@
 			clone.querySelector('.artwork-thumbnail').src = 'img/artwork/' + data[i].img;
 			clone.querySelector('.artwork-name').textContent = data[i].name;
 			clone.querySelector('.artwork-comment').textContent = data[i].comment;
-			clone.querySelector('.artwork-button').href = "./manage/?id=" + data[i].id;
+			clone.querySelector('.go-manage').href = "./manage/?id=" + data[i].id;
 			clone.querySelector('.artwork-last-update').textContent = "Last update: " + data[i].last_update;
 			
 			$('#artwork-cardlist').append(clone);

@@ -6,6 +6,8 @@
 		exit;
 	}
 
+	$_SESSION['editmode'] = false;
+
 	require_once '../DSN.php';
 	$sql = mysqli_connect($dsn['host'], $dsn['user'], $dsn['pass'], 'artwork');
 
@@ -167,71 +169,80 @@
 
 		<div class="col-lg-5 col-xl-5 col-md-12 col-sm-12 col-xs-12 card">
 			<div class="row card-body justify-content-around">
-				<div class="form-group d-flex btn-toolbar row justify-content-around col-12">
-					<button class="btn btn-secondary col-md-3 col-sm-6" id="create-new-damage" onclick="createDamage()">
-						<span>現在位置に</span><span>新しい</span><span>損傷を</span><span>登録</span></button>
+				<div class="custom-control custom-switch">
+					<input type="checkbox" class="custom-control-input" id="switchEdit" onchange="switchEditMode(event)">
+					<label class="custom-control-label" for="switchEdit">編集モード</label>
+				</div>
 
-<!--					<button class="btn btn-secondary col-md-3 col-sm-6" data-toggle="modal" id="edit-damage" data-target="#edit-damage-dialog">
-						<span>この損傷を</span><span>編集</span></button>-->
+				<div class="editable-item d-none">
+					<div class="form-group d-flex btn-toolbar row justify-content-around col-12">
+						<button class="btn btn-secondary col-md-3 col-sm-6" id="create-new-damage" onclick="createDamage()">
+							<span>現在位置に</span><span>新しい</span><span>損傷を</span><span>登録</span></button>
 
-					<button class="btn btn-secondary col-md-3 col-sm-6" id="beginMoveDamageButton" onclick="beginMoveDamage()">
-						<span>この損傷の</span><span>位置を</span><span>変更</span></button>
+	<!--					<button class="btn btn-secondary col-md-3 col-sm-6" data-toggle="modal" id="edit-damage" data-target="#edit-damage-dialog">
+							<span>この損傷を</span><span>編集</span></button>-->
 
-					<div id="endMoveDamageButtons" class="col-md-3 col-sm-6 btn-group-vertical" role="group">
-						<button class="btn btn-primary" onclick="endMoveDamage()">完了</button>
-						<button class="btn btn-secondary" onclick="cancelMoveDamage()">キャンセル</button>						
+						<button class="btn btn-secondary col-md-3 col-sm-6" id="beginMoveDamageButton" onclick="beginMoveDamage()">
+							<span>この損傷の</span><span>位置を</span><span>変更</span></button>
+
+						<div id="endMoveDamageButtons" class="col-md-3 col-sm-6 btn-group-vertical" role="group">
+							<button class="btn btn-primary" onclick="endMoveDamage()">完了</button>
+							<button class="btn btn-secondary" onclick="cancelMoveDamage()">キャンセル</button>						
+						</div>
+
+						<button class="btn btn-warning col-md-3 col-sm-6" data-toggle="modal" id="delete-damage" data-target="#delete-damage-dialog">
+							<span>この損傷を</span><span>削除</span></button>
 					</div>
-
-					<button class="btn btn-warning col-md-3 col-sm-6" data-toggle="modal" id="delete-damage" data-target="#delete-damage-dialog">
-						<span>この損傷を</span><span>削除</span></button>
 				</div>
 
 				<div class="form-group row col-12">
 					<label for="damage-type" class="col-3 col-form-label">種類</label>
 					<div class="col-9">
-						<input type="text" class="form-control" id="damage-type" placeholder="種類" onchange="changeType(event)">
+						<input type="text" class="form-control editable-input" id="damage-type" placeholder="種類" onchange="changeType(event)" readonly="true">
 					</div>
 				</div>
 
 				<div class="form-group row col-12">
 					<label for="damage-comment" class="col-3 col-form-label">コメント</label>
 					<div class="col-9">
-						<textarea type="text" rows="4" class="form-control" id="damage-comment" placeholder="コメント" onchange="changeComment(event)"></textarea>
+						<textarea type="text" rows="4" class="form-control editable-input" id="damage-comment" placeholder="コメント" onchange="changeComment(event)" readonly="true"></textarea>
 					</div>
 				</div>
 
 				<div class="form-group row col-12">
 					<label for="damage-adddate" class="col-3 col-form-label">登録日</label>
 					<div class="col-9">
-						<input type="date" class="form-control" id="damage-adddate" onchange="changeAddDate(event)">
+						<input type="date" class="form-control editable-input" id="damage-adddate" onchange="changeAddDate(event)" readonly="true">
 					</div>
 				</div>
 
 				<div class="form-group row col-12">
 					<label for="damage-deldate" class="col-3 col-form-label">削除日</label>
 					<div class="col-9">
-						<input type="date" class="form-control" id="damage-deldate" onchange="changeDelDate(event)">
+						<input type="date" class="form-control editable-input" id="damage-deldate" onchange="changeDelDate(event)" readonly="true">
 					</div>
 				</div>
 
-				<div class="form-group row col-12">
-					<label for="color" class="col-3 col-form-label">色・形状</label>
-					<div class="col-3">
-						<input type="color" class="form-control" id="damage-color" value="#000000" 
-						style="margin:0px; border:0px;" onchange="changeColor(event)">
-					</div>
+				<div class="editable-item d-none">
+					<div class="form-group row col-12">
+						<label for="color" class="col-3 col-form-label">色・形状</label>
+						<div class="col-3">
+							<input type="color" class="form-control" id="damage-color" value="#000000" 
+							style="margin:0px; border:0px;" onchange="changeColor(event)">
+						</div>
 
-					<div class="btn-group btn-group-toggle col-md-6 col-sm-12 text-left" data-toggle="buttons" 
-					id="damage-shape-buttons" style="flex-wrap: wrap;">
-						<template id="shape-option">
-							<button class="btn btn-outline-secondary shape-button" onchange="changeShape(event);" disabled>
-								<input type="radio" autocomplete="off" class="shape-button">
-								<img class="shape-img" src="" style="width:auto; height:2.5vh;">
-							</button>
-						</template>
-						<label for="damage-radius">サイズ</label>
-						<input type="range" class="custom-range" id="damage-radius" min="0" max="<?php echo $width * 0.1; ?>" value="0" 
-							onmousemove="changeRadius(event)" ontouchmove="changeRadius(event)" onchange="changeRadius(event,true)">
+						<div class="btn-group btn-group-toggle col-md-6 col-sm-12 text-left" data-toggle="buttons" 
+						id="damage-shape-buttons" style="flex-wrap: wrap;">
+							<template id="shape-option">
+								<button class="btn btn-outline-secondary shape-button" onchange="changeShape(event);" disabled>
+									<input type="radio" autocomplete="off" class="shape-button">
+									<img class="shape-img" src="" style="width:auto; height:2.5vh;">
+								</button>
+							</template>
+							<label for="damage-radius">サイズ</label>
+							<input type="range" class="custom-range" id="damage-radius" min="0" max="<?php echo $width * 0.1; ?>" value="0" 
+								onmousemove="changeRadius(event)" ontouchmove="changeRadius(event)" onchange="changeRadius(event,true)">
+						</div>
 					</div>
 				</div>
 
@@ -239,17 +250,19 @@
 					<div class="col-md-4 col-sm-12">
 						<label for="referenceImageControl" class="col-form-label">参考画像</label>
 
-						<div class="d-flex btn-toolbar">
-							<button class="btn btn-sm btn-secondary col-md-12 col-sm-6" id="add-damage-image">
-								<label style="width:100%;">
-									<input type="file" id="damage-image-uploader" style="display:none" onchange="addDamageImage(event);">参考画像を追加
-									<div class="progress">
-										<div class="progress-bar" role="progressbar" id="damageImageUploadProgress" style="width: 0%" aria-valuenow="0" 
-											aria-valuemin="0" aria-valuemax="100"></div>
-									</div>
-								</label>
-							</button>
-							<button class="btn btn-sm btn-warning col-md-12 col-sm-6" id="delete-damage-image" data-toggle="modal" data-target="#delete-damage-image-dialog" disabled>現在の画像を削除</button>
+						<div class="editable-item d-none">
+							<div class="d-flex btn-toolbar">
+								<button class="btn btn-sm btn-secondary col-md-12 col-sm-6" id="add-damage-image">
+									<label style="width:100%;">
+										<input type="file" id="damage-image-uploader" style="display:none" onchange="addDamageImage(event);">参考画像を追加
+										<div class="progress">
+											<div class="progress-bar" role="progressbar" id="damageImageUploadProgress" style="width: 0%" aria-valuenow="0" 
+												aria-valuemin="0" aria-valuemax="100"></div>
+										</div>
+									</label>
+								</button>
+								<button class="btn btn-sm btn-warning col-md-12 col-sm-6" id="delete-damage-image" data-toggle="modal" data-target="#delete-damage-image-dialog" disabled>現在の画像を削除</button>
+							</div>
 						</div>
 					</div>
 
@@ -282,28 +295,30 @@
 			</div>
 		</div>
 
-		<div class="col-lg-7 col-xl-7 col-md-12 col-sm-12 col-xs-12 card">
-			<div class="row card-body">
-				<div class="form-group d-flex col-12">
-					<input type="text" class="form-control col-9" id="artwork_tag" placeholder="タグ(コンマ区切り)" value="<?php echo $artwork_tag; ?>">
-					<button class="btn btn-secondary col-3" onclick="updateTag()">タグを更新</button>
-				</div>
-				<div class="form-group d-flex col-12">
-					<label id="tag-update-msg"></label>
-				</div>
+		<div class="editable-item d-none">
+			<div class="col-lg-7 col-xl-7 col-md-12 col-sm-12 col-xs-12 card">
+				<div class="row card-body">
+					<div class="form-group d-flex col-12">
+						<input type="text" class="form-control col-9" id="artwork_tag" placeholder="タグ(コンマ区切り)" value="<?php echo $artwork_tag; ?>">
+						<button class="btn btn-secondary col-3" onclick="updateTag()">タグを更新</button>
+					</div>
+					<div class="form-group d-flex col-12">
+						<label id="tag-update-msg"></label>
+					</div>
 
-				<div class="form-group d-flex col-12">
-					<textarea class="form-control col-9" id="artwork_comment"><?php echo $artwork_comment; ?></textarea>
-					<button class="btn btn-secondary col-3" onclick="updateComment()">コメントを更新</button>
-				</div>
-				<div class="form-group d-flex col-12">
-					<label id="comment-update-msg"></label>
-				</div>
+					<div class="form-group d-flex col-12">
+						<textarea class="form-control col-9" id="artwork_comment"><?php echo $artwork_comment; ?></textarea>
+						<button class="btn btn-secondary col-3" onclick="updateComment()">コメントを更新</button>
+					</div>
+					<div class="form-group d-flex col-12">
+						<label id="comment-update-msg"></label>
+					</div>
 
-				<div class="form-group d-flex col-12">
-					<button class="btn btn-success" onclick="export_to_excel()" id="export-btn">Excelにエクスポート<br>
-						<small hidden="1" id="export-wait-message">しばらくお待ち下さい</small></button>
-					<button class="btn btn-danger" data-toggle="modal" data-target="#delete-artwork-dialog">この美術品を削除</button>
+					<div class="form-group d-flex col-12">
+						<button class="btn btn-success" onclick="export_to_excel()" id="export-btn">Excelにエクスポート<br>
+							<small hidden="1" id="export-wait-message">しばらくお待ち下さい</small></button>
+						<button class="btn btn-danger" data-toggle="modal" data-target="#delete-artwork-dialog">この美術品を削除</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -686,7 +701,7 @@
 				var w = damage['radius'] * 2;
 				var h = damage['radius'] * 2;
 
-				context.globalAlpha = 0.5;
+				context.globalAlpha = 0.25;
 				context.drawImage(rad_canvas, 0, 0, rad_canvas.width, rad_canvas.height, x, y, w, h);
 				context.globalAlpha = 1.0;
 			}
@@ -718,6 +733,12 @@
 			mem_context.globalCompositeOperation = "destination-over";
 			mem_context.drawImage(shape_img_tmp, 0, 0, shape_img_tmp.width, shape_img_tmp.height, 
 				0, 0, mem_canvas.width, mem_canvas.height);
+
+			mem_context.globalCompositeOperation = "destination-out";
+			mem_context.drawImage(shape_img_tmp, 0, 0, shape_img_tmp.width, shape_img_tmp.height, 
+				mem_canvas.width * margin * 2, mem_canvas.height * margin * 2, 
+				mem_canvas.width * (1 - margin * 4), mem_canvas.height * (1 - margin * 4));
+
 			mem_context.globalCompositeOperation = "source-over";
 
 			if (selected_damage === damage || moving_damage === damage) {
@@ -986,6 +1007,38 @@
 	//
 	// 損傷編集関係
 	//
+
+	function switchEditMode(e) {
+		editable = e.target.checked;
+
+		if (editable) {
+			pass = window.prompt("パスワードを入力してください", "");
+			$.ajax({
+				type: "POST",
+				url: './changeEditMode.php',
+				dataType: 'json',
+				data: {'editmode': true, 'pass': pass},
+			}).done(function (data, textStatus, xhr) {
+				if (data['result']) {
+					$('.editable-item').removeClass('d-none');
+					$('.editable-input').attr('readonly', false);
+				} else {
+					alert('パスワードが違います');
+					e.target.checked = false;
+				}
+			});
+		} else {
+			$.ajax({
+				type: "POST",
+				url: './changeEditMode.php',
+				dataType: 'json',
+				data: {'editmode': false},
+			}).done(function (data, textStatus, xhr) {
+				$('.editable-item').addClass('d-none');
+				$('.editable-input').attr('readonly', true);
+			});
+		}
+	}
 
 	function createDamage() {
 		var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * img_scale;
@@ -1373,8 +1426,8 @@
 
 		$('#damageImageUploadProgress').parent().hide();
 
-		$('#show-date').val(dateToISO(new Date()));
-		updateVisibleDamageByDate($('#show-date').val());
+//		$('#show-date').val(dateToISO(new Date()));
+		updateVisibleDamageByDate();
 	});
 </script>
 </body>

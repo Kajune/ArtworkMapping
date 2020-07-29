@@ -1,7 +1,7 @@
 <?php
 	session_start();
 
-	if (empty($_SERVER["HTTP_REFERER"])) {
+	if (empty($_SERVER["HTTP_REFERER"]) or !isset($_SESSION['editmode']) or !$_SESSION['editmode']) {
 		header('Location:../');
 		exit;
 	}

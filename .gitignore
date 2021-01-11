@@ -1,4 +1,8 @@
 *
+!*.py
+!*.php
+!*.js
+!*.html
 !.gitignore
 !LICENSE
 !README.md

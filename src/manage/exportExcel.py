@@ -4,6 +4,7 @@ import datetime
 import numpy as np
 import sys
 import cv2
+import os
 
 A2Z = [chr(i) for i in range(65, 65+26)]
 
@@ -12,8 +13,8 @@ baseColWidth = 10
 
 def fetchData(id):
 	sql = MySQLdb.connect(
-		user='artworkadmin', passwd='akagisankawaii',
-		host='localhost', db='artwork')
+		user=os.environ['ARTWORK_DB_ENV_MYSQL_USER'], passwd=os.environ['ARTWORK_DB_ENV_MYSQL_PASSWORD'],
+		host=os.environ['MYSQL_HOST'], db=os.environ['ARTWORK_DB_ENV_MYSQL_DATABASE'])
 
 	cur = sql.cursor()
 	cur.execute("SET NAMES utf8")

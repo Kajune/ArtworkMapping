@@ -2,7 +2,7 @@
 	session_start();
 
 	require_once 'DSN.php';
-	$sql = mysqli_connect($dsn['host'], $dsn['user'], $dsn['pass'], 'artwork');
+	$sql = mysqli_connect($dsn['host'], $dsn['user'], $dsn['pass'], $dsn['db']);
 
 	if (mysqli_connect_errno()) {
 		echo mysqli_error($sql);

@@ -29,9 +29,9 @@ docker\setup_db.bat
 編集モードの初期パスワードは「akagisannkawaii」です
 
 ## ユーザ名・パスワード等の設定
-- 編集モードパスワード: src/DSN.php (Default: akagisannkawaii、設定変更の際はsha256のハッシュを設定)
+- 編集モードパスワード: docker/artwork_server/Dockerfile (Default: akagisannkawaii、設定変更の際はsha256のハッシュを設定)
 - DBユーザパスワード: docker/artwork_db/Dockerfile (Default: akagisannkawaii)
-- その他DB関連: docker/artwork_db/Dockerfile (src/DSN.phpと整合を取ってください)
+- その他DB関連: docker/artwork_db/Dockerfile
 - ポート番号: build_server.bat (Default: 8080)
 
 ## メンテナンス

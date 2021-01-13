@@ -7,7 +7,7 @@
 	}
 
 	$id = escapeshellcmd($_POST['id']);
-	$command = "python exportExcel.py $id";
+	$command = "python3 exportExcel.py $id";
 	exec($command, $output);
 
 	echo json_encode(["result" => $output[0]]);

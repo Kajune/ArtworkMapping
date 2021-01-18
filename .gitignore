@@ -1,2 +1,6 @@
 *.pyc
 *.xlsx
+src/img/damage/*
+!src/img/damage/.gitignore
+src/manage/tmp/*
+!src/manage/tmp/.gitignore

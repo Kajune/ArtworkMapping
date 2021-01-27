@@ -77,8 +77,8 @@ def drawImgOnOverlay(img, overlay, x, y, add=False):
 
 	return overlay
 
-if __name__ == '__main__':
-	shapes, artwork, damages, damage_imgs = fetchData(id=int(sys.argv[1]))
+def saveExcel(id):
+	shapes, artwork, damages, damage_imgs = fetchData(id=id)
 	shape_imgs = loadShapes(shapes)
 
 	wb = openpyxl.Workbook()
@@ -189,5 +189,9 @@ if __name__ == '__main__':
 	dt_now = datetime.datetime.now()
 	fname = 'tmp/export_%d_%s.xlsx' % (artwork[0], dt_now.strftime('%Y-%m-%d %H-%M-%S'))
 	wb.save(fname)
+	return fnmae
+
+if __name__ == '__main__':
+	fname = saveExcel(int(sys.argv[1]))
 	print(fname)
 

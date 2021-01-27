@@ -177,6 +177,8 @@ def saveExcel(id):
 		for damage_img in damage_imgs:
 			if damage[0] == damage_img[1]:
 				img = cv2.imread('../img/damage/' + damage_img[2])
+				if img is None:
+					continue
 				scale = defaultRowHeight * height / img.shape[0]
 				img = cv2.resize(img, None, fx=scale, fy=scale)
 				cv2.imwrite('tmp/' + damage_img[2], img)
@@ -189,7 +191,7 @@ def saveExcel(id):
 	dt_now = datetime.datetime.now()
 	fname = 'tmp/export_%d_%s.xlsx' % (artwork[0], dt_now.strftime('%Y-%m-%d %H-%M-%S'))
 	wb.save(fname)
-	return fnmae
+	return fname
 
 if __name__ == '__main__':
 	fname = saveExcel(int(sys.argv[1]))

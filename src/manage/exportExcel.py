@@ -189,7 +189,9 @@ def saveExcel(id):
 		row_count += row_step
 
 	dt_now = datetime.datetime.now()
-	fname = 'tmp/export_%d_%s.xlsx' % (artwork[0], dt_now.strftime('%Y-%m-%d %H-%M-%S'))
+
+	artwork_name = artwork[1].replace(' ', '_').replace('/', '').replace('\\', '')
+	fname = 'tmp/export_%d_%s_%s.xlsx' % (artwork[0], artwork_name, dt_now.strftime('%Y-%m-%d %H-%M-%S'))
 	wb.save(fname)
 	return fname
 

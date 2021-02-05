@@ -7,9 +7,10 @@
 	}
 
 	if($_SERVER['REQUEST_METHOD'] === 'POST') {
-		file_put_contents(__DIR__.'/mail-address-list.txt', PHP_EOL.$_POST['addr'], FILE_APPEND);
+		file_put_contents(__DIR__.'/mail-address-list.txt', $_POST['addr'].PHP_EOL, FILE_APPEND);
 	}
 
-	$mail_address_list =  explode("\n", file_get_contents(__DIR__.'/mail-address-list.txt'));
+	$mail_address_list = explode("\n", file_get_contents(__DIR__.'/mail-address-list.txt'));
+	array_pop($mail_address_list);
 	echo json_encode($mail_address_list);
 ?>

@@ -3,4 +3,4 @@
 !src/img/damage/.gitignore
 src/manage/tmp/*
 !src/manage/tmp/.gitignore
-src/manage/mail/*.txt
+src/mail/*.txt

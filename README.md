@@ -25,14 +25,14 @@ docker\build_server.bat
 ```
 docker\setup_db.bat
 ```
-4. 利用開始(localhost:8080等にアクセス)
+4. 利用開始(localhost:15010等にアクセス)
 編集モードの初期パスワードは「akagisannkawaii」です
 
 ## ユーザ名・パスワード等の設定
 - 編集モードパスワード: docker/artwork_server/Dockerfile (Default: akagisannkawaii、設定変更の際はsha256のハッシュを設定)
 - DBユーザパスワード: docker/artwork_db/Dockerfile (Default: akagisannkawaii)
 - その他DB関連: docker/artwork_db/Dockerfile
-- ポート番号: build_server.bat (Default: 8080)
+- ポート番号: build_server.bat (Default: 15010)
 
 ## メンテナンス
 サーバを一時的に停止させる場合は、以下を実行

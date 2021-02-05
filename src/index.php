@@ -53,6 +53,7 @@
 	<h1><span>美術品損傷</span><span>管理システム</span></h1>
 	<br>
 	<a type="button" class="btn-lg btn-primary" href="addArtwork">新しい美術品の登録</a>
+	<a type="button" class="btn-lg btn-secondary" href="mail">メール配信</a>
 	<br><br>
 
 	<hr>

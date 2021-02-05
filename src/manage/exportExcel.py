@@ -196,6 +196,7 @@ def saveExcel(id):
 	return fname
 
 if __name__ == '__main__':
-	fname = saveExcel(int(sys.argv[1]))
-	print(fname)
+	for i in range(1, len(sys.argv)):
+		fname = saveExcel(int(sys.argv[i]))
+		print(fname)
 

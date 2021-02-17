@@ -7,7 +7,7 @@
 	}
 
 	$id = escapeshellcmd($_POST['id']);
-	if (ctype_digt($id)) {
+	if (ctype_digit($id)) {
 		$command = "python3 exportExcel.py $id";
 		exec($command, $output);
 		echo json_encode(["result" => $output[0]]);

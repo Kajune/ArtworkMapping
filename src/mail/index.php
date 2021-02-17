@@ -214,7 +214,7 @@
 	}
 
 	function addAddress() {
-		let addr = $('#add-address').val();
+		let addr = $('#add-address').val().replace(/\s/g, '').replace(/\n/g, '');
 		setTimeout(function(){$('#addAddress-msg').text('');}, 3000);
 
 		if (addr === '') {

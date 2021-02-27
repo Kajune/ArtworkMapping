@@ -20,7 +20,7 @@ services:
     container_name: artwork_server
     restart: always
     ports:
-      - 15010:80
+      - ${PORT}:80
     volumes: 
       - ./src:/var/www/html
     hostname: artwork.local

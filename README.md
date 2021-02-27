@@ -19,31 +19,50 @@ git clone https://github.com/Kajune/ArtworkMapping
 ```
 2. Dockerイメージのビルド
 ```
-docker\build_server.bat
+docker-compose build
 ```
-3. DBの初期値セット(パスワードを聞かれるので、以下の「DBユーザパスワード」を入力してください)
+3. Dockerコンテナの起動
 ```
-docker\setup_db.bat
+docker-compose up
 ```
-4. 利用開始(localhost:15010等にアクセス)
+4. DBの初期値セット(パスワードを聞かれるので、以下の「DBユーザパスワード」を入力してください)
+```
+docker\setup_db.bat #Windows
+./docker/setup_db.sh #Linux
+```
+5. 利用開始(localhost:15010等にアクセス)
 編集モードの初期パスワードは「akagisannkawaii」です
 
 ## ユーザ名・パスワード等の設定
-- 編集モードパスワード: docker/artwork_server/Dockerfile (Default: akagisannkawaii、設定変更の際はsha256のハッシュを設定)
-- DBユーザパスワード: docker/artwork_db/Dockerfile (Default: akagisannkawaii)
-- その他DB関連: docker/artwork_db/Dockerfile
-- ポート番号: build_server.bat (Default: 15010)
+.envファイルの以下の変数を設定
+- 編集モードパスワード: EDITHASH (Default: akagisannkawaii、設定変更の際はsha256のハッシュを設定)
+- DBユーザパスワード: MYSQL_PASSWORD (Default: akagisannkawaii)
+- ポート番号: PORT (Default: 15010)
 
 ## メンテナンス
 サーバを一時的に停止させる場合は、以下を実行
 ```
-docker\stop_server.bat
+docker-compose stop
 ```
 
 サーバを再起動させる場合は、以下を実行
 ```
-docker\start_server.bat
+docker-compose up
 ```
 
-※Windows対応を主眼においていますが、Dockerであるため任意の環境に展開できます。
-Bash環境などではバッチファイルをシェルスクリプトに読み替えてください。
+サーバを完全に停止させる場合は、以下を実行
+```
+docker-compose down
+```
+
+DBのバックアップを作成する場合は、以下を実行
+```
+docker\backup.bat #Windows
+./docker/backup.sh #Linux
+```
+
+バックアップからDBをリストアする場合は、以下を実行
+```
+docker\restore.bat #Windows
+./docker/restore.sh #Linux
+```

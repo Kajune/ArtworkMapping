@@ -1,0 +1,1 @@
+docker run --rm --volumes-from artwork_db -v $PWD:/backup busybox tar cvf /backup/backup.tar /var/lib/mysql

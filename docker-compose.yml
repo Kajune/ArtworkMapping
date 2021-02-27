@@ -1,0 +1,36 @@
+version: '3'
+services:
+  artwork_db:
+    build: docker/artwork_db
+    image: artwork_db
+    container_name: artwork_db
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    volumes: 
+      - artwork_db_volume:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+  artwork_server:
+    build: docker/artwork_server
+    image: artwork_server
+    container_name: artwork_server
+    restart: always
+    ports:
+      - 15010:80
+    volumes: 
+      - ./src:/var/www/html
+    hostname: artwork.local
+    environment:
+      MYSQL_HOST: artwork_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      EDITMODE_HASH: 
+
+volumes:
+  artwork_db_volume:
+    driver: local

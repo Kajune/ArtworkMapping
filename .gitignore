@@ -4,3 +4,4 @@
 src/manage/tmp/*
 !src/manage/tmp/.gitignore
 src/mail/*.txt
+*.tar

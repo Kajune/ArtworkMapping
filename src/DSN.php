@@ -1,9 +1,9 @@
 <?php
 $dsn = array(
 	'host' => getenv('MYSQL_HOST'),
-	'user' => getenv('ARTWORK_DB_ENV_MYSQL_USER'),
-	'db' => getenv('ARTWORK_DB_ENV_MYSQL_DATABASE'),
-	'pass' => getenv('ARTWORK_DB_ENV_MYSQL_PASSWORD'),
+	'user' => getenv('MYSQL_USER'),
+	'db' => getenv('MYSQL_DATABASE'),
+	'pass' => getenv('MYSQL_PASSWORD'),
 	'hash' => getenv('EDITMODE_HASH'),
 );
 ?>

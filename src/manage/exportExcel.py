@@ -13,8 +13,8 @@ baseColWidth = 10
 
 def fetchData(id):
 	sql = MySQLdb.connect(
-		user=os.environ['ARTWORK_DB_ENV_MYSQL_USER'], passwd=os.environ['ARTWORK_DB_ENV_MYSQL_PASSWORD'],
-		host=os.environ['MYSQL_HOST'], db=os.environ['ARTWORK_DB_ENV_MYSQL_DATABASE'])
+		user=os.environ['MYSQL_USER'], passwd=os.environ['MYSQL_PASSWORD'],
+		host=os.environ['MYSQL_HOST'], db=os.environ['MYSQL_DATABASE'])
 
 	cur = sql.cursor()
 	cur.execute("SET NAMES utf8")

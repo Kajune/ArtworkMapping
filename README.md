@@ -47,7 +47,7 @@ docker-compose stop
 
 サーバを再起動させる場合は、以下を実行
 ```
-docker-compose up
+docker-compose start
 ```
 
 サーバを完全に停止させる場合は、以下を実行

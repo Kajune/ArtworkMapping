@@ -77,6 +77,35 @@
 		echo mysqli_error($sql);
 	}
 
+	function makeExportData() {
+		$file_list = [];
+
+		$command = "cd ../manage && python3 exportExcel.py ";
+		foreach ($_POST['export-target-list'] as &$target_id) {
+			$id = escapeshellcmd($target_id);
+			if (ctype_digit($id)) {
+				$command = $command.$id.' ';
+			}
+		}
+		exec($command, $file_list);
+
+		return $file_list;
+	}
+
+	function makeZip($file_list) {
+		$zip = new ZipArchive;
+
+		$attach_file = '../manage/tmp/export_archive_'.date("Y-m-d H-i-s").'.zip';
+		$zip->open($attach_file, ZipArchive::CREATE|ZipArchive::OVERWRITE);
+		foreach ($file_list as $file) {
+			$new_filename = substr($file,strrpos($file,'/') + 1);
+			$zip->addFile('../manage/'.$file, $new_filename);
+		}
+		$zip->close();
+
+		return $attach_file;
+	}
+
 	if($_SERVER['REQUEST_METHOD'] === 'POST'){
 		$bad_flag = false;
 		if (!isset($_POST['export-target-list']) or count($_POST['export-target-list']) == 0) {
@@ -84,54 +113,48 @@
 			$bad_flag = true;
 		}
 		
-		if (!isset($_POST['mail-address-list']) or count($_POST['mail-address-list']) == 0) {
-			echo '<script type="text/javascript">failAlert("メールアドレスが一つも選択されていません")</script>';
-			$bad_flag = true;
-		}
-
-		if (!$bad_flag) {
-			$file_list = [];
-
-			$command = "cd ../manage && python3 exportExcel.py ";
-			foreach ($_POST['export-target-list'] as &$target_id) {
-				$id = escapeshellcmd($target_id);
-				if (ctype_digit($id)) {
-					$command = $command.$id.' ';
-				}
+		if (isset($_POST['send'])) {
+			if (!isset($_POST['mail-address-list']) or count($_POST['mail-address-list']) == 0) {
+				echo '<script type="text/javascript">failAlert("メールアドレスが一つも選択されていません")</script>';
+				$bad_flag = true;
 			}
-			exec($command, $file_list);
 
-			if (count($file_list) == 0 || count($file_list) != count($_POST['export-target-list'])) {
-				echo '<script type="text/javascript">failAlert("エクスポートに失敗しました。")</script>';
-			} else {
-				if (count($file_list) == 1) {
-					$attach_file = $file_list[0];
+			if (!$bad_flag) {
+				$file_list = makeExportData();
+				
+				if (count($file_list) == 0 || count($file_list) != count($_POST['export-target-list'])) {
+					echo '<script type="text/javascript">failAlert("エクスポートに失敗しました。")</script>';
 				} else {
-					$zip = new ZipArchive;
-
-					$attach_file = '../manage/tmp/export_archive_'.date("Y-m-d H-i-s").'.zip';
-					$zip->open($attach_file, ZipArchive::CREATE|ZipArchive::OVERWRITE);
-					foreach ($file_list as $file) {
-						$new_filename = substr($file,strrpos($file,'/') + 1);
-						$zip->addFile('../manage/'.$file, $new_filename);
+					if (count($file_list) == 1) {
+						$attach_file = $file_list[0];
+					} else {
+						$attach_file = makeZip($file_list);
 					}
-					$zip->close();
-				}
 
-				echo $attach_file;
-				$success = true;
-				$header = 'From: test@artwork.local';
-				foreach ($_POST['mail-address-list'] as $addr) {
-					if (!mb_send_mail($addr, '美術品損傷管理システム', $_POST['mail-text'], $header)) {
-						echo '<script type="text/javascript">failAlert("メール送信に失敗しました: '.$addr.'")</script>';
-						$success = false;
+					echo $attach_file;
+					$success = true;
+					$header = 'From: test@artwork.local';
+					foreach ($_POST['mail-address-list'] as $addr) {
+						if (!mb_send_mail($addr, '美術品損傷管理システム', $_POST['mail-text'], $header)) {
+							echo '<script type="text/javascript">failAlert("メール送信に失敗しました: '.$addr.'")</script>';
+							$success = false;
+						}
 					}
-				}
 
-				if ($success) {
-					echo '<script type="text/javascript">successAlert()</script>';
+					if ($success) {
+						echo '<script type="text/javascript">successAlert()</script>';
+					}
 				}
 			}
+		} else if (isset($_POST['download'])) {
+			$file_list = makeExportData();
+			$attach_file = makeZip($file_list);
+
+
+			header('Content-Type: application/octet-stream');
+			header("Content-Transfer-Encoding: Binary"); 
+			header("Content-disposition: attachment; filename=\"" . basename($attach_file) . "\""); 
+			readfile($attach_file); 
 		}
 	}
 
@@ -177,8 +200,12 @@
 		</div>
 
 		<div class="text-center col-lg-12">
-			<button type="submit" class="btn btn-lg btn-primary" id="submit">送信する</button>
+			<button type="submit" class="btn btn-lg btn-primary" name="send" id="send">送信する</button>
 			<a type="button" class="btn btn-lg btn-secondary" href="../">一覧に戻る</a>
+		</div>
+		<br><br>
+		<div class="text-center col-lg-12">
+			<button type="submit" class="btn btn-md btn-primary" name="download" id="download">エクスポートデータのダウンロード</button>
 		</div>
 	</form>		
 </div>

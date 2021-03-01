@@ -150,11 +150,7 @@
 			$file_list = makeExportData();
 			$attach_file = makeZip($file_list);
 
-
-			header('Content-Type: application/octet-stream');
-			header("Content-Transfer-Encoding: Binary"); 
-			header("Content-disposition: attachment; filename=\"" . basename($attach_file) . "\""); 
-			readfile($attach_file); 
+			header('Location: download.php?url='.$attach_file);
 		}
 	}
 

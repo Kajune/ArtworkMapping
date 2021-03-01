@@ -147,10 +147,12 @@
 				}
 			}
 		} else if (isset($_POST['download'])) {
-			$file_list = makeExportData();
-			$attach_file = makeZip($file_list);
+			if (!$bad_flag) {
+				$file_list = makeExportData();
+				$attach_file = makeZip($file_list);
 
-			header('Location: download.php?url='.$attach_file);
+				header('Location: download.php?url='.$attach_file);
+			}
 		}
 	}
 

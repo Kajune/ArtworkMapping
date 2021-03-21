@@ -18,5 +18,5 @@
 		$_POST['color'], $_POST['shape_id'], $_POST['x'], $_POST['y'], $_POST['radius'], $_POST['id']);
 	mysqli_stmt_execute($stmt);
 
-	echo json_encode(['error' => mysqli_error($sql), 'deldate' => $_POST['deldate']]);
+	echo json_encode(['error' => mysqli_error($sql)]);
 ?>

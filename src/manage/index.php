@@ -60,10 +60,12 @@
 
 	# idに紐づく損傷に紐づく画像
 	$damage_image_list = [];
+	$damage_image_update = [];
 	$result = mysqli_query($sql, "SELECT damage_img.id, damage_img.damage_id, damage_img.img ".
 		"FROM damage_img JOIN damage ON damage_img.damage_id = damage.id WHERE `artwork_id` = $id");
 	if ($result) {
 		while ($row = $result->fetch_assoc()) {
+			$row['update'] =date("Y/m/d", filemtime('../img/damage/'. $row['img']));
 			$damage_image_list[] = $row;
 		}
 		mysqli_free_result($result);
@@ -95,7 +97,7 @@
 	<style type="text/css">
 		.carousel-caption {
 			position: absolute;
-			top: 90%;
+			top: 80%;
 			transform: translateY(-100%);
 		}
 	</style>
@@ -627,7 +629,7 @@
 				clone.find('img.thumbnail').attr('data-target', '#damage-image' + damage_image['id']);
 				clone.find('label').attr('data-target', '#damage-image' + damage_image['id']);
 				clone.find('.modal').attr('id', 'damage-image' + damage_image['id']);
-				clone.find('.damage-image-index').text((count + 1) + '枚目');
+				clone.find('.damage-image-index').html((count + 1) + '枚目<br>' + damage_image['update']);
 				clone.attr('name', '' + damage_image['id']);
 				if (first) {
 					clone.addClass('active');
@@ -1189,6 +1191,10 @@
 			url: './updateDamage.php',
 			dataType: 'json',
 			data: data,
+		}).done(function (data, textStatus, xhr) {
+		}).fail(function (data, textStatus, xhr) {
+			console.log(textStatus);
+			alert('Failed to update damage. See console log.');
 		});
 	}
 

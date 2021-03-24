@@ -13,6 +13,10 @@
 		echo mysqli_error($sql);
 	}
 
+	$stmt = mysqli_prepare($sql, "DELETE FROM damage_img WHERE `damage_id` = ?");
+	mysqli_stmt_bind_param($stmt, "i", $_POST['id']);
+	mysqli_stmt_execute($stmt);
+
 	$stmt = mysqli_prepare($sql, "DELETE FROM damage WHERE `id` = ?");
 	mysqli_stmt_bind_param($stmt, "i", $_POST['id']);
 	mysqli_stmt_execute($stmt);

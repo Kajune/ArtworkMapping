@@ -1124,6 +1124,7 @@
 			updateTypeCheckbox();
 //			updateYearCheckbox();
 			updateCanvas(img_x, img_y, img_scale, img_angle);
+			console.log(data);
 		});
 	}
 

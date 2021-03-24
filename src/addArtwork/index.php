@@ -61,6 +61,8 @@
 
 <?php
 	require_once '../DSN.php';
+	require_once './image.php';
+
 	$sql = mysqli_connect($dsn['host'], $dsn['user'], $dsn['pass'], $dsn['db']);
 	
 	if (mysqli_connect_errno()) {
@@ -103,6 +105,11 @@
 					} else {
 						echo mysqli_error($sql);
 					}
+
+					# EXIF
+					$Image = new Image();
+					$binary = $Image->rotateFromBinary(file_get_contents('../img/artwork/'.$a));
+					file_put_contents('../img/artwork/'.$a, $binary);
 				} else {
 					echo '<script type="text/javascript">failAlert("ファイルのアップロードに失敗しました。")</script>';
 				}

@@ -124,7 +124,7 @@
 
 		<div class="col-lg-8">
 			<label for="artwork-name">美術品名</label>
-			<input type="text" class="form-control" name="artwork-name" placeholder="美術品名" id="artwork-name" required onchange="nameChange(event);">
+			<input type="text" class="form-control" name="artwork-name" placeholder="美術品名" id="artwork-name" required oninput="nameChange(event);">
 			<small style="color: red;" id="duplicate_error" hidden>既に存在している美術品名です。</small>
 			<br>
 

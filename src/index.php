@@ -34,7 +34,8 @@
 	<title>美術品損傷管理システム</title>
 
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+	<!-- 注意！Ajaxのためここだけslimじゃないものを使っている -->
+	<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
 
@@ -71,7 +72,17 @@
 			<div class="card h-100">
 				<img src="" class="card-img-top artwork-thumbnail">
 				<div class="card-body">
-					<h5 class="card-title artwork-name">美術品名</h5>
+					<h5 class="card-title">
+						<div hidden class="artwork-id"></div>
+						<span class="artwork-name" onclick="startEditArtworkName(event);">美術品名</span>
+						<div class="input-group artwork-name-input" hidden>
+							<input type="text" class="form-control" oninput="checkArtworkName(event);">
+							<div class="input-group-append">
+								<button class="btn btn-primary" onclick="endEditArtworkName(event);">OK</button>
+							</div>
+						</div>
+						<small style="color: red;" class="duplicate_error" hidden>同名の美術品が存在します</small>
+					</h5>
 					<a href="" type="button" class="btn-block btn-primary go-manage">管理</a>
 					<div class="badge-area justify-content-around"></div>
 					<p class="card-text artwork-comment">説明・コメント</p>
@@ -85,10 +96,11 @@
 
 <script type="text/javascript">
 	var tagList = [];
+	var data = <?php echo json_encode($artwork_array); ?>;
 
 	function checkNewTag(event) {
-		var tags = event.target.value.trim().replace(/\s+/g, "").split(',');
-		for (var i = 0; i < tags.length; i++) {
+		let tags = event.target.value.trim().replace(/\s+/g, "").split(',');
+		for (let i = 0; i < tags.length; i++) {
 			addTag(tags[i]);
 		}
 
@@ -97,8 +109,8 @@
 
 	function showTagList() {
 		$('#tag-area').children().remove();
-		for (var i = 0; i < tagList.length; i++) {
-			var tag = document.createElement("button");
+		for (let i = 0; i < tagList.length; i++) {
+			let tag = document.createElement("button");
 			tag.className = 'badge badge-pill badge-light text-wrap';
 			tag.innerText = tagList[i];
 			tag.onclick = function(event) {
@@ -118,7 +130,7 @@
 	}
 
 	function removeTag(tagName) {
-		var index = tagList.indexOf(tagName);
+		let index = tagList.indexOf(tagName);
 		if (index >= 0) {
 			tagList.splice(index, 1);
 		}
@@ -127,19 +139,18 @@
 	}
 
 	function updateItems() {
-		var data = <?php echo json_encode($artwork_array); ?>;
-		var template = document.getElementById('card-template');
+		let template = document.getElementById('card-template');
 
 		$('#artwork-cardlist').children().remove();
 
-		for (var i = 0; i < data.length; i++) {
-			var clone = template.content.cloneNode(true);
+		for (let i = 0; i < data.length; i++) {
+			let clone = template.content.cloneNode(true);
 
-			var tags = data[i].tag.trim().replace(/\s+/g, "").split(',');
+			let tags = data[i].tag.trim().replace(/\s+/g, "").split(',');
 
 			if (tagList.length > 0) {
-				var isOK = true;
-				for (var j = 0; j < tagList.length; j++) {
+				let isOK = true;
+				for (let j = 0; j < tagList.length; j++) {
 					if (tags.indexOf(tagList[j]) < 0) {
 						isOK = false;
 						break;
@@ -151,8 +162,8 @@
 				}
 			}
 
-			for (var j = 0; j < tags.length; j++) {
-				var tag = document.createElement("button");
+			for (let j = 0; j < tags.length; j++) {
+				let tag = document.createElement("button");
 				tag.className = 'badge badge-pill badge-light text-wrap';
 				tag.innerText = tags[j];
 				tag.onclick = function(event) {
@@ -161,6 +172,7 @@
 				clone.querySelector('.badge-area').appendChild(tag);
 			}
 
+			clone.querySelector('.artwork-id').textContent = data[i].id;
 			clone.querySelector('.artwork-thumbnail').src = 'img/artwork/' + data[i].img;
 			clone.querySelector('.artwork-name').textContent = data[i].name;
 			clone.querySelector('.artwork-comment').textContent = data[i].comment;
@@ -168,6 +180,58 @@
 			clone.querySelector('.artwork-last-update').textContent = "Last update: " + data[i].last_update;
 			
 			$('#artwork-cardlist').append(clone);
+		}
+	}
+
+	function checkArtworkNameValidity(name) {
+		for (let i = 0; i < data.length; i++) {
+			if (data[i].name === name) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	function startEditArtworkName(e) {
+		let editTarget = $(e.target).parent();
+		editTarget.find('.artwork-name').attr('hidden', true);
+		editTarget.find('.artwork-name-input').attr('hidden', false);
+		editTarget.find('.artwork-name-input').find('input').val(editTarget.find('.artwork-name').text());
+	}
+
+	function checkArtworkName(e) {
+		let editTarget = $(e.target).parent().parent();
+		let new_pname = editTarget.find('input').val();
+		let isAvailableName = checkArtworkNameValidity(new_pname) || new_pname === editTarget.find('.artwork-name').text();
+		editTarget.find('.duplicate_error').attr('hidden', isAvailableName);
+		editTarget.find('button').attr('disabled', !isAvailableName);
+	}
+
+	function endEditArtworkName(e) {
+		var editTarget = $(e.target).parent().parent().parent();
+		editTarget.find('.artwork-name').attr('hidden', false);
+		editTarget.find('.artwork-name-input').attr('hidden', true);
+		editTarget.find('.duplicate_error').attr('hidden', true);
+
+		var new_pname = editTarget.find('input').val();
+		if (new_pname !== editTarget.find('.artwork-name').text() && checkArtworkNameValidity(new_pname)) {	
+			var data = { 
+				'id': editTarget.find('.artwork-id').text(), 
+				'name': new_pname,
+			};
+
+			$.ajax({
+				type: "POST",
+				url: './manage/updateArtworkName.php',
+				dataType: 'json',
+				data: data,
+			}).done(function(data){
+				//console.log(data);
+				location.reload(true);		
+			}).fail(function(data){
+				console.log(data);
+			});
 		}
 	}
 

@@ -161,6 +161,7 @@
 						<canvas id="artwork_canvas" width="1000" height="1000" style="background-color:gray; width:100%; height: auto;"></canvas>
 						<button class="btn btn-secondary float-left" onclick="scale(false)">+</button>
 						<button class="btn btn-secondary float-left" onclick="scale(true)">-</button>
+						<button class="btn btn-secondary float-left" onclick="rotate(true)">↻</button>
 						<small>損傷を選択するには、損傷を中央の円内に収める</small>
 					</div>
 				</div>
@@ -498,6 +499,7 @@
 	var img_x = 0;
 	var img_y = 0;
 	var img_scale = 1;
+	var img_angle = 0;
 
 	var clicked = false;
 
@@ -670,13 +672,22 @@
 		}
 	}
 
-	function drawMainImage(x, y, scale, real_scale) {
+	function drawMainImage(x, y, scale, real_scale, angle) {
 		context.clearRect(0, 0, canvas.width, canvas.height);
 
 		context.scale(real_scale, real_scale);
 		context.translate((canvas.width / real_scale - img.width) / 2, (canvas.height / real_scale - img.height) / 2);
 		context.translate(x * 0.5 * canvas.width / real_scale, -y * 0.5 * canvas.height / real_scale);
+
+		context.translate(img.width / 2, img.height / 2);
+		context.rotate(angle * Math.PI / 180);
+		context.translate(-img.width / 2, -img.height / 2);
+
 		context.drawImage(img, 0, 0);
+
+		context.translate(img.width / 2, img.height / 2);
+		context.rotate(-angle * Math.PI / 180);
+		context.translate(-img.width / 2, -img.height / 2);
 
 		for (const damage of damage_list) {
 			if (!damage['visible']) {
@@ -804,10 +815,10 @@
 		thumb_context.resetTransform();
 	}
 
-	function updateCanvas(x, y, scale) {
+	function updateCanvas(x, y, scale, angle) {
 		var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * scale;
 		checkSelection(x, y, real_scale);
-		drawMainImage(x, y, scale, real_scale);
+		drawMainImage(x, y, scale, real_scale, angle);
 		drawReticle();
 		drawSubImage(x, y, real_scale);
 	}
@@ -827,7 +838,16 @@
 			scale_change /= img_scale;
 			img_scale = 1;
 		}
-		updateCanvas(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale, img_angle);
+	}
+
+	function rotate(right=true) {
+		if (right) {
+			img_angle += 90;
+		} else {
+			img_angle -= 90;
+		}
+		updateCanvas(img_x, img_y, img_scale, img_angle);
 	}
 
 	function onMouseDown(event) {
@@ -851,7 +871,7 @@
 			var rect = canvas.getBoundingClientRect();
 			img_x += (event.x - mx) / (rect.right - rect.left) * 2;
 			img_y += (event.y - my) / (rect.top - rect.bottom) * 2;
-			updateCanvas(img_x, img_y, img_scale);
+			updateCanvas(img_x, img_y, img_scale, img_angle);
 		}
 
 		mx = event.x;
@@ -881,7 +901,7 @@
 		img_x *= scale_change;
 		img_y *= scale_change;
 
-		updateCanvas(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale, img_angle);
 
 		event.preventDefault();
 	}
@@ -946,7 +966,7 @@
 			finger_distance = new_finger_distance;
 		}
 
-		updateCanvas(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale, img_angle);
 
 		tx = x;
 		ty = y;
@@ -1082,7 +1102,7 @@
 			}
 
 			damage_list.push(damage);
-			updateCanvas(img_x, img_y, img_scale);
+			updateCanvas(img_x, img_y, img_scale, img_angle);
 		});
 	}
 
@@ -1103,7 +1123,7 @@
 		}).done(function (data, textStatus, xhr) {
 			updateTypeCheckbox();
 //			updateYearCheckbox();
-			updateCanvas(img_x, img_y, img_scale);
+			updateCanvas(img_x, img_y, img_scale, img_angle);
 		});
 	}
 
@@ -1147,7 +1167,7 @@
 		if (selected_damage) {
 			selected_damage['color'] = e.target.value;
 			updateDamage(selected_damage);
-			updateCanvas(img_x, img_y, img_scale);
+			updateCanvas(img_x, img_y, img_scale, img_angle);
 		}
 		defaultDamageValue['color'] = e.target.value;
 	}
@@ -1158,7 +1178,7 @@
 			if (upload) {
 				updateDamage(selected_damage);
 			}
-			updateCanvas(img_x, img_y, img_scale);
+			updateCanvas(img_x, img_y, img_scale, img_angle);
 		}
 		defaultDamageValue['radius'] = e.target.value;
 	}
@@ -1167,7 +1187,7 @@
 		if (selected_damage) {
 			selected_damage['shape_id'] = e.target.name;
 			updateDamage(selected_damage);
-			updateCanvas(img_x, img_y, img_scale);
+			updateCanvas(img_x, img_y, img_scale, img_angle);
 		}
 		defaultDamageValue['shape_id'] = e.target.name;
 	}
@@ -1205,7 +1225,7 @@
 		$('#beginMoveDamageButton').hide();		
 		$('#endMoveDamageButtons').show();
 		moving_damage = selected_damage;
-		updateCanvas(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale, img_angle);
 	}
 
 	function endMoveDamage() {
@@ -1223,14 +1243,14 @@
 			updateDamage(moving_damage);
 			moving_damage = null;
 		}
-		updateCanvas(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale, img_angle);
 	}
 
 	function cancelMoveDamage() {
 		$('#endMoveDamageButtons').hide();
 		$('#beginMoveDamageButton').show();
 		moving_damage = null;
-		updateCanvas(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale, img_angle);
 	}
 
 	function addDamageImage(e) {
@@ -1303,7 +1323,7 @@
 					(damage['type'] == '' || $('#visible-' + btoa(encodeURIComponent(damage['type']))).prop('checked'));
 			}
 		}
-		updateCanvas(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale, img_angle);
 	}*/
 
 	function updateVisibleDamageByDate() {
@@ -1322,7 +1342,7 @@
 			}
 			damage['visible'] = true;
 		}
-		updateCanvas(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale, img_angle);
 	}
 
 	function changeVisibleDate(e) {
@@ -1336,7 +1356,7 @@
 //					&& $('#visible-' + damage['adddate'].getFullYear()).prop('checked');
 			}
 		}
-		updateCanvas(img_x, img_y, img_scale);
+		updateCanvas(img_x, img_y, img_scale, img_angle);
 	}
 
 	function addNewType(id) {
@@ -1427,7 +1447,7 @@
 			$('#damage-shape-buttons').append(clone);
 		}
 
-		updateCanvas(img_x, img_y, img_scale, radius);
+		updateCanvas(img_x, img_y, img_scale, img_angle);
 		enableEditing(selected_damage);
 
 		$('#damageImageUploadProgress').parent().hide();

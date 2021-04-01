@@ -173,7 +173,7 @@
 		<div class="col-lg-5 col-xl-5 col-md-12 col-sm-12 col-xs-12 card">
 			<div class="row card-body justify-content-around">
 				<div class="custom-control custom-switch">
-					<input type="checkbox" class="custom-control-input" id="switchEdit" onchange="switchEditMode(event)">
+					<input type="checkbox" class="custom-control-input" id="switchEdit" onchange="openEditModeDialog(event);">
 					<label class="custom-control-label" for="switchEdit">編集モード</label>
 				</div>
 
@@ -330,6 +330,25 @@
 
 
 <!-- ダイアログ -->
+<div class="modal fade" id="editmode-dialog" tabindex="-1" role="dialog" aria-labelledby="label_editmode" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="label_editmode">編集モード</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#switchEdit').prop('checked', false);">
+				<span aria-hidden="true">&times;</span></button>
+			</div>
+			<div class="modal-body">
+				パスワードを入力してください<br>
+				<input type="password" id="password" class="form-control">
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" onclick="switchEditMode()" data-dismiss="modal">OK</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <div class="modal fade" id="delete-damage-dialog" tabindex="-1" role="dialog" aria-labelledby="label_delete_damage" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
@@ -502,7 +521,6 @@
 	var img_angle = 0;
 
 	var clicked = false;
-	var editable = false;
 
 	var mx = 0;
 	var my = 0;
@@ -1040,11 +1058,18 @@
 	// 損傷編集関係
 	//
 
-	function switchEditMode(e) {
-		editable = e.target.checked;
+	function openEditModeDialog(e) {
+		if (e.target.checked) {
+			$('#editmode-dialog').modal('show');
+		} else {
+			switchEditMode();
+		}
+	}
 
-		if (editable) {
-			pass = window.prompt("パスワードを入力してください", "");
+	function switchEditMode() {
+		if ($('#switchEdit').prop('checked')) {
+			pass = $('#password').val();
+			$('#password').val('');
 			$.ajax({
 				type: "POST",
 				url: './changeEditMode.php',
@@ -1056,7 +1081,7 @@
 					$('.editable-input').attr('readonly', false);
 				} else {
 					alert('パスワードが違います');
-					e.target.checked = false;
+					$('#switchEdit').prop('checked', false);
 				}
 			});
 		} else {
@@ -1119,7 +1144,7 @@
 	// Sometimes text data is not updated because onchange is only called when focus is removed.
 	// To address this issue, explicitlly calling this function when selected_damage is changed.
 	function reflectDamageText(last_selected_damage) {
-		if (!last_selected_damage || !editable) {
+		if (!last_selected_damage || !$('#switchEdit').prop('checked')) {
 			return;
 		}
 
@@ -1479,6 +1504,10 @@
 
 //		$('#show-date').val(dateToISO(new Date()));
 		updateVisibleDamageByDate();
+
+		$('#editmode-dialog').on('shown.bs.modal', function () {
+			$('#password').focus();
+		});
 	});
 </script>
 </body>

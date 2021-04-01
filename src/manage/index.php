@@ -502,6 +502,7 @@
 	var img_angle = 0;
 
 	var clicked = false;
+	var editable = false;
 
 	var mx = 0;
 	var my = 0;
@@ -573,6 +574,14 @@
 	//
 	// 描画関係
 	//
+
+	function getRealScale() {
+		if (img_angle === 0 || img_angle === 180) {
+			return Math.min(canvas.width / img.width, canvas.height / img.height) * img_scale;
+		} else {
+			return Math.min(canvas.width / img.height, canvas.height / img.width) * img_scale;			
+		}
+	}
 
 	function enableEditing(enable) {
 //		$('#create-new-damage').prop("disabled", enable);
@@ -668,6 +677,7 @@
 			selected_damage = null;
 		}
 		if (last_selected_damage != selected_damage) {
+			reflectDamageText(last_selected_damage);
 			enableEditing(selected_damage);
 		}
 	}
@@ -816,7 +826,7 @@
 	}
 
 	function updateCanvas(x, y, scale, angle) {
-		var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * scale;
+		var real_scale = getRealScale();
 		checkSelection(x, y, real_scale);
 		drawMainImage(x, y, scale, real_scale, angle);
 		drawReticle();
@@ -1063,7 +1073,7 @@
 	}
 
 	function createDamage() {
-		var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * img_scale;
+		var real_scale = getRealScale();
 		var centerX = -img_x * canvas.width / real_scale / 2 + img.width / 2;
 		var centerY = img_y * canvas.height / real_scale / 2 + img.height / 2;
 
@@ -1104,6 +1114,20 @@
 			damage_list.push(damage);
 			updateCanvas(img_x, img_y, img_scale, img_angle);
 		});
+	}
+
+	// Sometimes text data is not updated because onchange is only called when focus is removed.
+	// To address this issue, explicitlly calling this function when selected_damage is changed.
+	function reflectDamageText(last_selected_damage) {
+		if (!last_selected_damage || !editable) {
+			return;
+		}
+
+		last_selected_damage['type'] = $('#damage-type').val();
+		last_selected_damage['comment'] = $('#damage-comment').val();
+
+		updateDamage(last_selected_damage);
+		updateTypeCheckbox();
 	}
 
 	function deleteDamage() {
@@ -1234,7 +1258,7 @@
 		$('#beginMoveDamageButton').show();
 
 		if (moving_damage) {
-			var real_scale = Math.min(canvas.width / img.width, canvas.height / img.height) * img_scale;
+			var real_scale = getRealScale();
 			var centerX = -img_x * canvas.width / real_scale / 2 + img.width / 2;
 			var centerY = img_y * canvas.height / real_scale / 2 + img.height / 2;
 

@@ -245,6 +245,9 @@
 							<label for="damage-radius">サイズ</label>
 							<input type="range" class="custom-range" id="damage-radius" min="0" max="<?php echo $width * 0.1; ?>" value="0" 
 								onmousemove="changeRadius(event)" ontouchmove="changeRadius(event)" onchange="changeRadius(event,true)">
+							<label for="damage-angle">角度</label>
+							<input type="range" class="custom-range" id="damage-angle" min="-180" max="180" value="0" 
+								onmousemove="changeAngle(event)" ontouchmove="changeAngle(event)" onchange="changeAngle(event,true)">
 						</div>
 					</div>
 				</div>
@@ -612,6 +615,7 @@
 		$('#damage-deldate').prop("disabled", !enable);
 		$('#damage-color').prop("disabled", !enable);
 		$('#damage-radius').prop("disabled", !enable);
+		$('#damage-angle').prop("disabled", !enable);
 		$('button.shape-button').prop("disabled", !enable);
 		$('#add-damage-image').prop("disabled", !enable);
 		$('#delete-damage-image').prop("disabled", !enable);
@@ -625,7 +629,8 @@
 			$('#damage-date').val(dateToISO(today));
 			$('#damage-color').val('#000000');
 			$('#damage-radius').val(0.0);
-			
+			$('#damage-angle').val(0.0);
+
 			$('#damage-image-list').children().not('template').remove();
 		} else {
 			$('#damage-type').val(selected_damage['type']);
@@ -634,6 +639,7 @@
 			$('#damage-deldate').val(dateToISO(selected_damage['deldate']));
 			$('#damage-color').val(selected_damage['color']);
 			$('#damage-radius').val(selected_damage['radius']);
+			$('#damage-angle').val(selected_damage['angle']);
 
 			var shape_button = $('input.shape-button');
 			shape_button.prop('checked', false);
@@ -737,13 +743,21 @@
 				rad_context.fillRect(0, 0, rad_canvas.width, rad_canvas.height);
 				rad_context.globalCompositeOperation = "source-over";
 
-				var x = damage['x'] - damage['radius'];
-				var y = damage['y'] - damage['radius'];
-				var w = damage['radius'] * 2;
-				var h = damage['radius'] * 2;
+				var x = damage['x'];
+				var y = damage['y'];
+
+				if (moving_damage === damage) {
+					x = -img_x * canvas.width / real_scale / 2 + img.width / 2;
+					y = img_y * canvas.height / real_scale / 2 + img.height / 2;
+				}
 
 				context.globalAlpha = 0.25;
-				context.drawImage(rad_canvas, 0, 0, rad_canvas.width, rad_canvas.height, x, y, w, h);
+				context.translate(x, y);
+				context.rotate(damage['angle'] * Math.PI / 180);
+				context.drawImage(rad_canvas, 0, 0, rad_canvas.width, rad_canvas.height, 
+					-damage['radius'], -damage['radius'], damage['radius'] * 2, damage['radius'] * 2);
+				context.rotate(-damage['angle'] * Math.PI / 180);
+				context.translate(-x, -y);
 				context.globalAlpha = 1.0;
 			}
 		}
@@ -790,17 +804,21 @@
 				mem_context.stroke();
 			}
 
-			var x = damage['x'] - scaled_marker_size / 2;
-			var y = damage['y'] - scaled_marker_size / 2;
+			var x = damage['x'];
+			var y = damage['y'];
 			var w = scaled_marker_size;
 			var h = scaled_marker_size;
 
 			if (moving_damage === damage) {
-				x = -img_x * canvas.width / real_scale / 2 + img.width / 2 - w / 2;
-				y = img_y * canvas.height / real_scale / 2 + img.height / 2 - h / 2;
+				x = -img_x * canvas.width / real_scale / 2 + img.width / 2;
+				y = img_y * canvas.height / real_scale / 2 + img.height / 2;
 			}
 
-			context.drawImage(mem_canvas, 0, 0, mem_canvas.width, mem_canvas.height, x, y, w, h);
+			context.translate(x, y);
+			context.rotate(damage['angle'] * Math.PI / 180);
+			context.drawImage(mem_canvas, 0, 0, mem_canvas.width, mem_canvas.height, -w/2, -h/2, w, h);
+			context.rotate(-damage['angle'] * Math.PI / 180);
+			context.translate(-x, -y);
 		}
 		context.resetTransform();
 	}
@@ -1231,6 +1249,17 @@
 			updateCanvas(img_x, img_y, img_scale, img_angle);
 		}
 		defaultDamageValue['radius'] = e.target.value;
+	}
+
+	function changeAngle(e, upload=false) {
+		if (selected_damage) {
+			selected_damage['angle'] = e.target.value;
+			if (upload) {
+				updateDamage(selected_damage);
+			}
+			updateCanvas(img_x, img_y, img_scale, img_angle);
+		}
+		defaultDamageValue['angle'] = e.target.value;
 	}
 
 	function changeShape(e) {

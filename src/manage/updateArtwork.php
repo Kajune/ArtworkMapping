@@ -18,7 +18,7 @@
 	$comment = $_POST['artwork-comment'];
 	$deleted = mysqli_real_escape_string($sql, $_POST['artwork-deleted']);
 
-	$stmt = mysqli_prepare($sql, "UPDATE artwork SET tag = ?, comment = ?, deleted = $deleted, last_update = CURDATE() WHERE `id` = ?");
+	$stmt = mysqli_prepare($sql, "UPDATE artwork SET tag = ?, comment = ?, deleted = $deleted WHERE `id` = ?");
 	mysqli_stmt_bind_param($stmt, "ssi", $tag, $comment, $id);
 	mysqli_stmt_execute($stmt);
 

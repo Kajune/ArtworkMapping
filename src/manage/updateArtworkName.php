@@ -16,7 +16,7 @@
 	$id = $_POST['id'];
 	$name = $_POST['name'];
 
-	$stmt = mysqli_prepare($sql, "UPDATE artwork SET name = ?, last_update = CURDATE() WHERE `id` = ?");
+	$stmt = mysqli_prepare($sql, "UPDATE artwork SET name = ? WHERE `id` = ?");
 	mysqli_stmt_bind_param($stmt, "si", $name, $id);
 	mysqli_stmt_execute($stmt);
 

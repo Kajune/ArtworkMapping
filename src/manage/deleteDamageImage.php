@@ -17,5 +17,7 @@
 	mysqli_stmt_bind_param($stmt, "i", $_POST['id']);
 	mysqli_stmt_execute($stmt);
 
+	last_update_by_damage($sql, $_POST['id']);
+
 	echo json_encode(['error' => mysqli_error($sql)]);
 ?>

@@ -20,5 +20,7 @@
 	$last_id = mysqli_insert_id($sql);
 	$result = mysqli_query($sql, "SELECT * from damage where `id` = $last_id");
 
+	last_update($sql, $_POST['artwork_id']);
+
 	echo json_encode(['error' => mysqli_error($sql), 'result' => mysqli_fetch_assoc($result)]);
 ?>

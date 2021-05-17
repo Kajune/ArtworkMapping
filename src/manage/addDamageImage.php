@@ -23,6 +23,8 @@
 			$last_id = mysqli_insert_id($sql);
 			$result = mysqli_query($sql, "SELECT * from damage_img where `id` = $last_id");
 
+			last_update_by_damage($sql, $_POST['damage_id']);
+
 			echo json_encode(['error' => mysqli_error($sql), 'result' => mysqli_fetch_assoc($result)]);
 		} else {
 			echo json_encode(['error' => 'File upload failed.']);

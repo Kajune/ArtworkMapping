@@ -609,8 +609,8 @@
 	}
 
 	var defaultDamageValue = {
-		'type' : '',
-		'color': $('#damage-color').val(),
+		'type' : type_list_global[0]['name'],
+		'color': type_list_global[0]['color'],
 		'shape_id' : shape_list[0]['id'],
 		'radius': 0,
 	};
@@ -1140,11 +1140,11 @@
 	}
 
 	function createDamage() {
-		var real_scale = getRealScale();
-		var centerX = -img_x * canvas.width / real_scale / 2 + img.width / 2;
-		var centerY = img_y * canvas.height / real_scale / 2 + img.height / 2;
+		let real_scale = getRealScale();
+		let centerX = -img_x * canvas.width / real_scale / 2 + img.width / 2;
+		let centerY = img_y * canvas.height / real_scale / 2 + img.height / 2;
 
-		var data = { 'artwork_id': id,
+		let data = { 'artwork_id': id,
 			'type' : defaultDamageValue['type'],
 			'color' : defaultDamageValue['color'],
 			'shape_id' : defaultDamageValue['shape_id'],
@@ -1152,6 +1152,13 @@
 			'y' : centerY, 
 			'radius' : defaultDamageValue['radius'],
 		};
+
+		for (const type of type_list_global) {
+			if (type['name'] === data['type'] && type['color']) {
+				data['color'] = type['color'];
+				break;
+			}
+		}
 
 		$.ajax({
 			type: "POST",
@@ -1227,7 +1234,7 @@
 
 			for (const type of type_list_global) {
 				if (type['name'] === selected_damage['type'] && type['color']) {
-					$('#damage-color').val(type['color']).trigger('change');;
+					$('#damage-color').val(type['color']).trigger('change');
 					break;
 				}
 			}

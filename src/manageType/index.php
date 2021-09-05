@@ -80,7 +80,7 @@
 				</td>
 				<td class="col-4">
 					<div class="color-specified">
-						<input type="color" class="type-color" onchange="updateType($(event.target).parent().parent().parent())">
+						<input type="color" class="type-color editable-button" disabled onchange="updateType($(event.target).parent().parent().parent())">
 						<button class="btn btn-sm btn-secondary editable-button" disabled 
 							onclick="colorSpecify(false, $(event.target).parent().parent().parent())">色指定を外す</button>
 					</div>

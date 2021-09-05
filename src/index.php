@@ -125,6 +125,9 @@
 		tagName = tagName.replace(/\s+/g, "").trim();
 		if (tagList.indexOf(tagName) == -1) {
 			tagList.push(tagName);
+
+			window.sessionStorage.setItem('tagList', tagList.toString());
+
 			showTagList();
 			updateItems();
 		}
@@ -135,6 +138,8 @@
 		if (index >= 0) {
 			tagList.splice(index, 1);
 		}
+
+		window.sessionStorage.setItem('tagList', tagList.toString());
 		showTagList();
 		updateItems();
 	}
@@ -237,6 +242,15 @@
 	}
 
 	$(document).ready(function() {
+		updateItems();
+
+		tagList = window.sessionStorage.getItem('tagList');
+		if (!tagList) {
+			tagList = [];
+		} else {
+			tagList = tagList.split(",");
+		}
+		showTagList();
 		updateItems();
 	});
 </script>

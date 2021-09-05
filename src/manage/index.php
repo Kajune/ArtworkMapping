@@ -46,6 +46,19 @@
 
 	$shape_list = json_encode($shape_list);
 
+	# 種類のリスト
+	$type_list = [];
+	if ($result = mysqli_query($sql, "SELECT * from damage_type")) {
+		while ($row = $result->fetch_assoc()) {
+			$type_list[] = $row;
+		}
+		mysqli_free_result($result);
+	} else {
+		echo mysqli_error($sql);
+	}
+
+	$type_list = json_encode($type_list);
+
 	# idに紐づく損傷を取得する
 	$damage_list = [];
 	$result = mysqli_query($sql, "SELECT * FROM damage WHERE `artwork_id` = $id");
@@ -201,7 +214,8 @@
 				<div class="form-group row col-12">
 					<label for="damage-type" class="col-3 col-form-label">種類</label>
 					<div class="col-9">
-						<input type="text" class="form-control editable-input" id="damage-type" placeholder="種類" onchange="changeType(event)" readonly="true">
+						<select class="form-control editable-input" id="damage-type" placeholder="種類" onchange="changeType(event)" readonly="true">
+						</select>
 					</div>
 				</div>
 
@@ -547,6 +561,15 @@
 	}
 
 	//
+	// 選択可能な損傷の設定
+	//
+	let type_list_global = <?php echo $type_list; ?>;
+	for (const type of type_list_global) {
+		let option = $('<option>').val(type['name']).text(type['name']);
+		$('#damage-type').append(option);
+	}
+
+	//
 	// 損傷の読み込み
 	//
 	var damage_list = <?php echo $damage_list; ?>;
@@ -621,7 +644,7 @@
 		$('#delete-damage-image').prop("disabled", !enable);
 
 		if (!enable || !selected_damage) {
-			$('#damage-type').val('');
+			$('#damage-type').find('option').prop('selected', false);
 			$('#damage-comment').val('');
 
 			var today = new Date();
@@ -633,7 +656,8 @@
 
 			$('#damage-image-list').children().not('template').remove();
 		} else {
-			$('#damage-type').val(selected_damage['type']);
+			$('#damage-type').find('option').prop('selected', false);
+			$('#damage-type').find('option[value="' + selected_damage['type'] + '"]').prop('selected', true);
 			$('#damage-comment').val(selected_damage['comment']);
 			$('#damage-adddate').val(dateToISO(selected_damage['adddate']));
 			$('#damage-deldate').val(dateToISO(selected_damage['deldate']));
@@ -1200,6 +1224,13 @@
 			selected_damage['type'] = e.target.value;
 			updateDamage(selected_damage);
 			updateTypeCheckbox();
+
+			for (const type of type_list_global) {
+				if (type['name'] === selected_damage['type'] && type['color']) {
+					$('#damage-color').val(type['color']).trigger('change');;
+					break;
+				}
+			}
 		}
 		defaultDamageValue['type'] = e.target.value;
 	}

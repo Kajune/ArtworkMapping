@@ -55,6 +55,7 @@
 	<br>
 	<a type="button" class="btn-lg btn-primary" href="addArtwork">新しい美術品の登録</a>
 	<a type="button" class="btn-lg btn-secondary" href="mail">メール配信</a>
+	<a type="button" class="btn-lg btn-secondary" href="manageType">損傷種類管理</a>
 	<br><br>
 
 	<hr>

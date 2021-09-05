@@ -6,3 +6,4 @@ src/manage/tmp/*
 src/mail/*.txt
 *.tar
 *.jpg
+src/phpMyAdmin

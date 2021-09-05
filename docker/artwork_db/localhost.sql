@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.0.2
+-- version 5.1.1
 -- https://www.phpmyadmin.net/
 --
--- ホスト: localhost
--- 生成日時: 2020-07-30 21:10:59
--- サーバのバージョン： 8.0.20
--- PHP のバージョン: 7.4.1
+-- ホスト: artwork_db
+-- 生成日時: 2021 年 9 月 05 日 00:00
+-- サーバのバージョン： 8.0.23
+-- PHP のバージョン: 7.4.8
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,7 +20,7 @@ SET time_zone = "+00:00";
 --
 -- データベース: `artwork`
 --
-CREATE DATABASE IF NOT EXISTS `artwork` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE DATABASE IF NOT EXISTS `artwork` DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 USE `artwork`;
 
 -- --------------------------------------------------------
@@ -44,8 +44,8 @@ CREATE TABLE `artwork` (
 --
 
 INSERT INTO `artwork` (`id`, `name`, `tag`, `comment`, `img`, `last_update`, `deleted`) VALUES
-(41, 'The Titan\'s Goblet', 'Thomas Cole,drawing,American,1833,表面,Luman Reed,John M. Falconer', '絵画の表面。メトロポリタン美術館所蔵のもの。', '5f17bf96a0e5a.jpg', '2020-07-22', 0),
-(42, 'The Titan’s Goblet', 'Thomas Cole,drawing,American,1833,裏面,Luman Reed,John M. Falconer', '絵画の裏面。メトロポリタン美術館所蔵のもの。', '5f17f147f06eb.jpg', '2020-07-22', 0);
+(41, 'The Titan\'s Goblet 2', 'Thomas Cole,drawing,American,1833,表面,Luman Reed,John M. Falconer', '絵画の表面。メトロポリタン美術館所蔵のもの。', '5f17bf96a0e5a.jpg', '2021-09-04', 0),
+(42, 'The Titan’s Goblet', 'Thomas Cole,drawing,American,1833,裏面,Luman Reed,John M. Falconer', '絵画の裏面。メトロポリタン美術館所蔵のもの。', '5f17f147f06eb.jpg', '2021-09-04', 0);
 
 -- --------------------------------------------------------
 
@@ -73,14 +73,14 @@ CREATE TABLE `damage` (
 --
 
 INSERT INTO `damage` (`id`, `artwork_id`, `type`, `comment`, `adddate`, `deldate`, `color`, `shape_id`, `x`, `y`, `radius`, `angle`) VALUES
-(110, 41, '傷', '白い。擦り傷？ヤケ？', '2020-07-22', '0000-00-00', '#f406c0', 1, 1938.87, 2041.78, 0, 0),
-(112, 41, '傷', '白い。擦り傷？ヤケ？絵具の一部？', '2019-07-22', '2020-06-22', '#ff00ff', 1, 1452.63, 1852.93, 0, 30),
-(114, 41, '傷', '白い。擦り傷？汚れ？ヤケ？絵具の一部？', '2018-07-22', '2020-06-22', '#ff00ff', 1, 1391.33, 1791.08, 0, 60),
-(115, 42, '筆跡', '(?)#04.29.1との記述あり', '2020-07-22', '2020-07-22', '#00ffff', 2, 3038.87, 2501.82, 0, 90),
-(117, 42, 'キズ', '', '2020-07-22', '0000-00-00', '#0000ff', 4, 3293.85, 3802.36, 0, 0),
+(110, 41, 'カビ', '', '2020-07-22', '0000-00-00', '#0011ff', 2, 1938.87, 2041.78, 281, 0),
+(112, 41, 'キズ', '', '2019-07-22', '2020-06-22', '#ff0000', 1, 1452.63, 1852.93, 0, 30),
+(114, 41, '筆跡', '', '2018-07-22', '2020-06-22', '#000000', 1, 1391.33, 1791.08, 0, 60),
+(115, 42, '筆跡', '(?)#04.29.1との記述あり', '2020-07-22', '2020-07-22', '#000000', 2, 3038.87, 2501.82, 0, 90),
+(117, 42, 'キズ', '', '2020-07-22', '0000-00-00', '#ff0000', 4, 3293.85, 3802.36, 0, 0),
 (119, 42, 'カビ', '', '2020-07-22', '0000-00-00', '#ffff00', 3, 332.194, 146.529, 0, -90),
 (120, 42, 'カビ', '', '2018-07-22', '2019-07-22', '#ffff00', 3, 3267.72, 2119.11, 0, 80),
-(122, 42, 'キズ', '大きめ。要経過観察', '2018-07-22', '0000-00-00', '#0000ff', 4, 105.25, 1769.38, 202, 70);
+(122, 42, 'キズ', '大きめ。要経過観察', '2018-07-22', '0000-00-00', '#ff0000', 4, 162.954, 1835.74, 202, 70);
 
 -- --------------------------------------------------------
 
@@ -100,6 +100,27 @@ CREATE TABLE `damage_img` (
 
 INSERT INTO `damage_img` (`id`, `damage_id`, `img`) VALUES
 (52, 115, '5f1803e18fdf4.jpg');
+
+-- --------------------------------------------------------
+
+--
+-- テーブルの構造 `damage_type`
+--
+
+CREATE TABLE `damage_type` (
+  `id` int NOT NULL,
+  `name` varchar(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `color` varchar(8) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+--
+-- テーブルのデータのダンプ `damage_type`
+--
+
+INSERT INTO `damage_type` (`id`, `name`, `color`) VALUES
+(6, '筆跡', '#000000'),
+(8, 'キズ', '#ff0000'),
+(9, 'カビ', NULL);
 
 -- --------------------------------------------------------
 
@@ -165,35 +186,47 @@ ALTER TABLE `damage_img`
   ADD KEY `damage_id` (`damage_id`);
 
 --
+-- テーブルのインデックス `damage_type`
+--
+ALTER TABLE `damage_type`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- テーブルのインデックス `shape`
 --
 ALTER TABLE `shape`
   ADD PRIMARY KEY (`id`);
 
 --
--- ダンプしたテーブルのAUTO_INCREMENT
+-- ダンプしたテーブルの AUTO_INCREMENT
 --
 
 --
--- テーブルのAUTO_INCREMENT `artwork`
+-- テーブルの AUTO_INCREMENT `artwork`
 --
 ALTER TABLE `artwork`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
--- テーブルのAUTO_INCREMENT `damage`
+-- テーブルの AUTO_INCREMENT `damage`
 --
 ALTER TABLE `damage`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
 
 --
--- テーブルのAUTO_INCREMENT `damage_img`
+-- テーブルの AUTO_INCREMENT `damage_img`
 --
 ALTER TABLE `damage_img`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
--- テーブルのAUTO_INCREMENT `shape`
+-- テーブルの AUTO_INCREMENT `damage_type`
+--
+ALTER TABLE `damage_type`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- テーブルの AUTO_INCREMENT `shape`
 --
 ALTER TABLE `shape`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;

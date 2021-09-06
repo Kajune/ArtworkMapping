@@ -17,6 +17,7 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: ${TZ}
 
   artwork_server:
     build: docker/artwork_server
@@ -34,6 +35,24 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       EDITMODE_HASH: ${EDITMODE_HASH}
+      TZ: ${TZ}
+
+  artwork_export:
+    build: docker/artwork_export
+    image: artwork_export
+    container_name: artwork_export
+    restart: always
+    volumes: 
+      - ./src:/var/www/html
+      - ./docker/artwork_export/crontab:/var/spool/cron/crontabs/root
+    environment:
+      MYSQL_HOST: artwork_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      EDITMODE_HASH: ${EDITMODE_HASH}
+      TZ: ${TZ}
+      LANG: C.UTF-8
 
 volumes:
   artwork_db_volume:

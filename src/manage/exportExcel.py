@@ -79,6 +79,13 @@ def drawImgOnOverlay(img, overlay, x, y, add=False):
 
 def saveExcel(id):
 	shapes, artwork, damages, damage_imgs = fetchData(id=id)
+	artwork_name = artwork[1].replace(' ', '_').replace('/', '').replace('\\', '')
+#	fname = 'tmp/export_%d_%s_%s.xlsx' % (artwork[0], artwork_name, dt_now.strftime('%Y-%m-%d %H-%M-%S'))
+	fname = 'tmp/export_%d_%s.xlsx' % (artwork[0], artwork_name)
+
+	if os.path.exists(fname) and datetime.datetime.fromtimestamp(os.path.getmtime(fname)) > artwork[5]:
+		return fname
+
 	shape_imgs = loadShapes(shapes)
 
 	wb = openpyxl.Workbook()
@@ -190,8 +197,6 @@ def saveExcel(id):
 
 	dt_now = datetime.datetime.now()
 
-	artwork_name = artwork[1].replace(' ', '_').replace('/', '').replace('\\', '')
-	fname = 'tmp/export_%d_%s_%s.xlsx' % (artwork[0], artwork_name, dt_now.strftime('%Y-%m-%d %H-%M-%S'))
 	wb.save(fname)
 	return fname
 

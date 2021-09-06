@@ -1,0 +1,1 @@
+00 0 * * * /var/www/html/manage/export_cron.sh

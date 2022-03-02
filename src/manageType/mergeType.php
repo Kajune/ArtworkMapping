@@ -13,9 +13,15 @@
 		echo mysqli_error($sql);
 	}
 
-	$stmt = mysqli_prepare($sql, "UPDATE damage_type SET name = ?, color = ? WHERE `id` = ?");
-	mysqli_stmt_bind_param($stmt, "ssi", $_POST['name'], $_POST['color'], $_POST['id']);
+	$stmt = mysqli_prepare($sql, "UPDATE damage_type SET `type` = ? WHERE `type` = ?");
+	mysqli_stmt_bind_param($stmt, "ss", $_POST['from-type'], $_POST['to-type']);
 	mysqli_stmt_execute($stmt);
+
+	$stmt = mysqli_prepare($sql, "DELETE FROM damage_type WHERE `id` = ?");
+	mysqli_stmt_bind_param($stmt, "i", $_POST['id']);
+	mysqli_stmt_execute($stmt);
+
+	last_update_by_damage($sql, $_POST['id']);
 
 	echo json_encode(['error' => mysqli_error($sql)]);
 ?>

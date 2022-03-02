@@ -93,6 +93,8 @@
 					<button class="btn btn-sm btn-secondary editable-button" disabled
 						onclick="openApplyDialog($(event.target).parent().parent())">適用</button>
 					<button class="btn btn-sm btn-secondary editable-button" disabled
+						onclick="openMergeDialog($(event.target).parent().parent())">統合</button>
+					<button class="btn btn-sm btn-secondary editable-button" disabled
 						onclick="openDeleteDialog($(event.target).parent().parent())">削除</button>
 				</td>
 			</tr>
@@ -141,6 +143,32 @@
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">いいえ</button>
 				<button type="button" class="btn btn-warning" id="apply-type-button" data-dismiss="modal">はい</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="merge-type-dialog" tabindex="-1" role="dialog" aria-labelledby="label_merge_type" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="label_merge_type">この種類を別の種類に統合</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<span aria-hidden="true">&times;</span></button>
+			</div>
+			<div class="modal-body">
+				本当にこの種類を以下の種類に統合しますか？
+				<br>
+
+				<div class="col-9">
+					<select class="form-control" id="damage-type-to-merge" placeholder="種類">
+					</select>
+				</div>
+
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">いいえ</button>
+				<button type="button" class="btn btn-warning" id="merge-type-button" data-dismiss="modal">はい</button>
 			</div>
 		</div>
 	</div>
@@ -205,6 +233,27 @@
 				}
 
 				$('#type-table-body').append(clone);
+			}
+		}).fail(function(data){
+			console.log(data);
+		});
+	}
+
+	function updateMergeList(exclude_id) {
+		$.ajax({
+			type: "GET",
+			url: './fetchType.php',
+			dataType: 'json',
+		}).done(function(data){
+			let type_list_global = data['data'];
+
+			$('#damage-type-to-merge').children().remove();
+			for (const type of type_list_global) {
+				if (type['id'] === exclude_id) {
+					continue;
+				}
+				let option = $('<option>').val(type['id']).text(type['name']);
+				$('#damage-type-to-merge').append(option);
 			}
 		}).fail(function(data){
 			console.log(data);
@@ -294,6 +343,25 @@
 		});
 	}
 
+	function mergeType(row) {
+		let data = {
+			'id': row.find('.type-id').text(), 
+			'from-type': row.find('.type-id').text(),
+			'to-type': $('#damage-type-to-merge').val(),
+		}
+
+		$.ajax({
+			type: "POST",
+			url: './mergeType.php',
+			dataType: 'json',
+			data: data,
+		}).done(function(data){
+			row.remove();
+		}).fail(function(data){
+			console.log(data);
+		});
+	}
+
 	function deleteType(row) {
 		let data = { 
 			'id': row.find('.type-id').text(), 
@@ -312,14 +380,23 @@
 	}
 
 	function openApplyDialog(row) {
-		$('#apply-type-button').on('click', function() {
+		$('#apply-type-button').off('click').on('click', function() {
 			applyType(row);
 		});
 		$('#apply-type-dialog').modal('show');
 	}
 
+	function openMergeDialog(row) {
+		updateMergeList(row.find('.type-id').text());
+
+		$('#merge-type-button').off('click').on('click', function() {
+			mergeType(row);
+		});
+		$('#merge-type-dialog').modal('show');
+	}
+
 	function openDeleteDialog(row) {
-		$('#delete-type-button').on('click', function() {
+		$('#delete-type-button').off('click').on('click', function() {
 			deleteType(row);
 		});
 		$('#delete-type-dialog').modal('show');

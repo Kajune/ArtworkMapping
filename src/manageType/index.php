@@ -345,9 +345,10 @@
 
 	function mergeType(row) {
 		let data = {
-			'id': row.find('.type-id').text(), 
-			'from-type': row.find('.type-id').text(),
-			'to-type': $('#damage-type-to-merge').val(),
+			'from-id': row.find('.type-id').text(), 
+			'to-id': $('#damage-type-to-merge').val(), 
+			'from-type': row.find('.type-name').val(),
+			'to-type': $('#damage-type-to-merge').children(':selected').text(),
 		}
 
 		$.ajax({
@@ -365,6 +366,7 @@
 	function deleteType(row) {
 		let data = { 
 			'id': row.find('.type-id').text(), 
+			'type': row.find('.type-name').val(),
 		};
 
 		$.ajax({

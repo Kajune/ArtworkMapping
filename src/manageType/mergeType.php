@@ -13,15 +13,19 @@
 		echo mysqli_error($sql);
 	}
 
-	$stmt = mysqli_prepare($sql, "UPDATE damage_type SET `type` = ? WHERE `type` = ?");
-	mysqli_stmt_bind_param($stmt, "ss", $_POST['from-type'], $_POST['to-type']);
+	$stmt = mysqli_prepare($sql, "UPDATE damage SET damage.type = ? WHERE damage.type = ?");
+	mysqli_stmt_bind_param($stmt, "ss", $_POST['to-type'], $_POST['from-type']);
+	mysqli_stmt_execute($stmt);
+
+	$stmt = mysqli_prepare($sql, "UPDATE damage, damage_type SET damage.color = damage_type.color WHERE damage.type = damage_type.name AND damage_type.color IS NOT NULL AND damage_type.id = ?;");
+	mysqli_stmt_bind_param($stmt, "i", $_POST['to-id']);
 	mysqli_stmt_execute($stmt);
 
 	$stmt = mysqli_prepare($sql, "DELETE FROM damage_type WHERE `id` = ?");
-	mysqli_stmt_bind_param($stmt, "i", $_POST['id']);
+	mysqli_stmt_bind_param($stmt, "i", $_POST['from-id']);
 	mysqli_stmt_execute($stmt);
 
-	last_update_by_damage($sql, $_POST['id']);
+#	last_update_by_damage($sql, $_POST['id']);
 
 	echo json_encode(['error' => mysqli_error($sql)]);
 ?>

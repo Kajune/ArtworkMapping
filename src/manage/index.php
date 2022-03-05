@@ -569,10 +569,21 @@
 		$('#damage-type').append(option);
 	}
 
+
 	//
 	// 損傷の読み込み
 	//
 	var damage_list = <?php echo $damage_list; ?>;
+
+	let type_list_unknown = [];
+	for (const damage of damage_list) {
+		if (type_list_unknown.indexOf(damage['type']) == -1 && type_list_global.indexOf(damage['type']) && damage['type'] !== '') {
+			let option = $('<option>').val(damage['type']).text(damage['type']);
+			$('#damage-type').append(option);
+			type_list_unknown.push(damage['type']);
+		}
+	}
+
 	var selected_damage = null;
 	var moving_damage = null;
 	var type_list = [];
@@ -609,9 +620,9 @@
 	}
 
 	var defaultDamageValue = {
-		'type' : type_list_global[0]['name'],
-		'color': type_list_global[0]['color'],
-		'shape_id' : shape_list[0]['id'],
+		'type' : type_list_global.length > 0 ? type_list_global[0]['name'] : '指定なし',
+		'color': type_list_global.length > 0 ? type_list_global[0]['color'] : '',
+		'shape_id' : type_list_global.length > 0 ? shape_list[0]['id'] : 0,
 		'radius': 0,
 	};
 

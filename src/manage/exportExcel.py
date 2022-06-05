@@ -84,7 +84,7 @@ def saveExcel(id):
 #	fname = 'tmp/export_%d_%s_%s.xlsx' % (artwork[0], artwork_name, dt_now.strftime('%Y-%m-%d %H-%M-%S'))
 	fname = 'tmp/export_%d_%s.xlsx' % (artwork[0], artwork_name)
 
-	if os.path.exists(fname) and datetime.datetime.fromtimestamp(os.path.getmtime(fname)) > artwork[5]:
+	if os.path.exists(fname) and datetime.datetime.fromtimestamp(os.path.getmtime(fname)) > datetime.datetime.combine(artwork[5], datetime.time(23,59,59)):
 		return fname
 
 	shape_imgs = loadShapes(shapes)
